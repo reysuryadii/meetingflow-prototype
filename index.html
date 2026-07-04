@@ -548,28 +548,78 @@ function toast(msg) {
   _toastTimer = setTimeout(() => el.classList.remove('show'), 2400);
 }
 
+// ==================== ROUTING ====================
+function pushHash(hash) {
+  history.pushState(null, '', location.pathname + location.search + hash);
+}
+
+function routeFromHash() {
+  const hash = location.hash.slice(1); // strip #
+  const parts = hash.split('/');
+  switch (parts[0]) {
+    case 'settings':
+      S.view = 'settings';
+      break;
+    case 'myboard':
+    case 'inbox':
+      S.view = 'myboard';
+      break;
+    case 'story':
+      if (parts[1] && parts[2] && DB.stories[parts[2]]) {
+        S.view = 'story'; S.projectId = parts[1]; S.storyId = parts[2];
+        S.storyTab = S.storyTab || 'timeline';
+        S.expandedProjects[parts[1]] = true;
+        S.expandedStories[parts[2]] = true;
+      }
+      break;
+    case 'meeting':
+      if (parts[1] && DB.meetings[parts[1]]) {
+        S.view = 'meeting'; S.meetingId = parts[1];
+        const m = DB.meetings[parts[1]];
+        if (m) { S.storyId = m.storyId; const st = DB.stories[m.storyId]; if (st) S.projectId = st.projectId; }
+      }
+      break;
+    case 'project':
+      if (parts[1] && DB.projects[parts[1]]) {
+        S.view = 'project'; S.projectId = parts[1];
+        S.expandedProjects[parts[1]] = true;
+      }
+      break;
+    default:
+      // no hash or unrecognised — stay on current view (first story on boot)
+      break;
+  }
+  render();
+}
+
+window.addEventListener('popstate', routeFromHash);
+
 // ==================== NAVIGATE ====================
 function goStory(projectId, storyId) {
   S.view = 'story'; S.projectId = projectId; S.storyId = storyId;
   S.storyTab = 'timeline';
   S.expandedProjects[projectId] = true;
   S.expandedStories[storyId] = true;
+  pushHash(`#story/${projectId}/${storyId}`);
   render();
 }
 function goMeeting(meetingId) {
   S.view = 'meeting'; S.meetingId = meetingId;
   const m = DB.meetings[meetingId];
   if (m) { S.storyId = m.storyId; const st = DB.stories[m.storyId]; if(st) S.projectId = st.projectId; }
+  pushHash(`#meeting/${meetingId}`);
   render();
 }
-function goMyBoard() { S.view = 'myboard'; render(); }
+function goMyBoard() { S.view = 'myboard'; pushHash('#myboard'); render(); }
 function goInbox()   { goMyBoard(); }
+function goSettings() { S.view = 'settings'; pushHash('#settings'); render(); }
 function goProject(projectId) {
   S.view = 'project'; S.projectId = projectId;
   S.expandedProjects[projectId] = true;
+  pushHash(`#project/${projectId}`);
   render();
 }
-function goBack() { S.view = 'story'; render(); }
+function goBack() { S.view = 'story'; pushHash(`#story/${S.projectId}/${S.storyId}`); render(); }
 
 // ==================== ACTIONS ====================
 function toggleProject(id) {
@@ -2654,8 +2704,6 @@ function createStory(projectId) {
 }
 
 // ==================== MAIN RENDER ====================
-function goSettings() { S.view = 'settings'; render(); }
-
 function renderSettings() {
   const card = 'background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm);overflow:hidden;margin-bottom:13px';
   document.getElementById('main').innerHTML = `
@@ -2756,7 +2804,12 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') closeModal();
 });
 
-render();
+// boot: restore from URL hash if present, otherwise default render
+if (location.hash && location.hash.length > 1) {
+  routeFromHash();
+} else {
+  render();
+}
 </script>
 </body>
 </html>
