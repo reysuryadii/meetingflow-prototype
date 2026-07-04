@@ -2659,11 +2659,11 @@ function goSettings() { S.view = 'settings'; render(); }
 function renderSettings() {
   const card = 'background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm);overflow:hidden;margin-bottom:13px';
   document.getElementById('main').innerHTML = `
-    <div style="display:flex;flex-direction:column;min-height:100%;overflow-y:auto">
+    <div style="flex:1;display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden">
       <div style="background:var(--bg-card);border-bottom:1px solid var(--border);padding:13px 22px;position:sticky;top:0;z-index:10">
         <div style="font-size:19px;font-weight:700;letter-spacing:-.02em">⚙ Settings</div>
       </div>
-      <div style="padding:18px 22px 55px;max-width:680px">
+      <div style="padding:18px 22px 55px">
 
         <h3 style="font-size:13px;font-weight:700;margin-bottom:9px;padding-bottom:6px;border-bottom:1px solid var(--border)">👤 Your Profile</h3>
         <div style="${card}">
