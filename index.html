@@ -1107,7 +1107,7 @@ function renderSidebar() {
       <div class="sb-avatar">R</div>
       <div class="sb-user">Reynerd Putra</div>
       <button class="sb-ico" onclick="toast('🌓 Theme toggle coming soon')">🌓</button>
-      <button class="sb-ico" onclick="toast('⚙ Settings')">⚙</button>
+      <button class="sb-ico" onclick="goSettings()" style="${S.view==='settings'?'background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.3)':''}">⚙</button>
     </div>`;
 }
 
@@ -2654,13 +2654,101 @@ function createStory(projectId) {
 }
 
 // ==================== MAIN RENDER ====================
+function goSettings() { S.view = 'settings'; render(); }
+
+function renderSettings() {
+  const card = 'background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm);overflow:hidden;margin-bottom:13px';
+  document.getElementById('main').innerHTML = `
+    <div style="display:flex;flex-direction:column;min-height:100%;overflow-y:auto">
+      <div style="background:var(--bg-card);border-bottom:1px solid var(--border);padding:13px 22px;position:sticky;top:0;z-index:10">
+        <div style="font-size:19px;font-weight:700;letter-spacing:-.02em">⚙ Settings</div>
+      </div>
+      <div style="padding:18px 22px 55px;max-width:680px">
+
+        <h3 style="font-size:13px;font-weight:700;margin-bottom:9px;padding-bottom:6px;border-bottom:1px solid var(--border)">👤 Your Profile</h3>
+        <div style="${card}">
+          <div style="padding:13px 14px;display:flex;flex-direction:column;gap:10px">
+            <div><label style="font-size:12px;color:var(--fg-muted);display:block;margin-bottom:3px">Display name</label>
+              <input value="Reynerd Putra" style="max-width:280px;width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 10px;font-size:13px;color:var(--fg);outline:none"></div>
+            <div><label style="font-size:12px;color:var(--fg-muted);display:block;margin-bottom:3px">Email</label>
+              <input value="reynerd.putra@astronauts.id" disabled style="max-width:280px;width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 10px;font-size:13px;color:var(--fg-muted);outline:none;opacity:.7"></div>
+            <div><label style="font-size:12px;color:var(--fg-muted);display:block;margin-bottom:3px">Role</label>
+              <span style="font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:6px;background:#fef3c7;color:#92400e">owner</span></div>
+            <button onclick="toast('✓ Profile saved')" style="width:fit-content;background:var(--accent);color:white;border:none;border-radius:var(--radius-sm);padding:6px 14px;font-size:12.5px;cursor:pointer">Save profile</button>
+          </div>
+        </div>
+
+        <h3 style="font-size:13px;font-weight:700;margin-bottom:9px;padding-bottom:6px;border-bottom:1px solid var(--border)">🤖 AI Processing Mode</h3>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:13px">
+          ${[
+            {key:'paste', badge:'Free',        bc:'var(--success-soft)', fc:'var(--success)', title:'Prompt-paste', desc:'Copy prompt, paste JSON back.', sel:false},
+            {key:'byo',   badge:'Recommended', bc:'var(--accent-soft)', fc:'var(--accent)',   title:'BYO API Key',  desc:'Direct Anthropic API call.',  sel:true},
+            {key:'hosted',badge:'Unavailable', bc:'var(--bg)', fc:'var(--fg-muted)',           title:'Hosted LLM',   desc:'Included in paid plans.',     sel:false, off:true},
+          ].map(m=>`
+            <div onclick="${m.off?'':`toast('✓ ${m.title} selected')`}" style="background:${m.sel?'var(--accent-soft)':'var(--bg-card)'};border:2px solid ${m.sel?'var(--accent)':'var(--border)'};border-radius:var(--radius);padding:11px;cursor:${m.off?'default':'pointer'};opacity:${m.off?.5:1}">
+              <span style="font-size:9.5px;font-weight:700;padding:2px 6px;border-radius:4px;margin-bottom:5px;display:inline-block;background:${m.bc};color:${m.fc}">${m.badge}</span>
+              <h4 style="font-size:12.5px;font-weight:700;margin:0 0 2px">${m.title}</h4>
+              <p style="font-size:11px;color:var(--fg-muted);margin:0">${m.desc}</p>
+            </div>`).join('')}
+        </div>
+
+        <h3 style="font-size:13px;font-weight:700;margin-bottom:9px;padding-bottom:6px;border-bottom:1px solid var(--border)">🔔 Notifications</h3>
+        <div style="${card}">
+          <div style="padding:0 13px">
+            ${['Email on ticket assignment','Daily digest (06:00 local)','Stale ticket nudge','Self-ticket suppression'].map((label,i)=>`
+            <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
+              <div style="flex:1;font-size:12.5px;font-weight:600">${label}</div>
+              <div onclick="this.dataset.on=this.dataset.on==='1'?'0':'1';this.style.background=this.dataset.on==='1'?'var(--accent)':'var(--border-strong)';this.querySelector('span').style.left=this.dataset.on==='1'?'18px':'3px'" data-on="${i<2?'1':'0'}" style="width:33px;height:18px;border-radius:10px;background:${i<2?'var(--accent)':'var(--border-strong)'};border:none;position:relative;cursor:pointer;flex-shrink:0">
+                <span style="position:absolute;width:12px;height:12px;border-radius:50%;background:white;top:3px;left:${i<2?'18':'3'}px;box-shadow:0 1px 2px rgba(0,0,0,.2)"></span>
+              </div>
+            </div>`).join('')}
+          </div>
+          <div style="padding:10px 13px">
+            <button onclick="toast('✓ Preferences saved')" style="background:var(--accent);color:white;border:none;border-radius:var(--radius-sm);padding:6px 14px;font-size:12.5px;cursor:pointer">Save preferences</button>
+            <p style="font-size:11px;color:var(--fg-muted);margin:6px 0 0">Email delivery is being wired — toggles have no effect on sending yet.</p>
+          </div>
+        </div>
+
+        <h3 style="font-size:13px;font-weight:700;margin-bottom:9px;padding-bottom:6px;border-bottom:1px solid var(--border)">🏢 Organization</h3>
+        <div style="${card}">
+          <div style="padding:13px 14px;display:flex;gap:6px">
+            <input value="MeetingFlow Workspace" style="flex:1;max-width:260px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 10px;font-size:13px;color:var(--fg);outline:none">
+            <button onclick="toast('✓ Organization saved')" style="background:var(--accent);color:white;border:none;border-radius:var(--radius-sm);padding:6px 14px;font-size:12.5px;cursor:pointer">Save</button>
+          </div>
+          <div style="border-top:1px solid var(--border)">
+            <div style="padding:10px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)">
+              <span style="font-size:13px;font-weight:600">👥 Team Members</span>
+              <span style="font-size:12px;color:var(--fg-muted)">1 member</span>
+            </div>
+            <div style="display:grid;grid-template-columns:34px 1fr 90px 72px;align-items:center;gap:8px;padding:10px 13px">
+              <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#a855f7);color:white;font-size:11px;font-weight:700;display:grid;place-items:center">R</div>
+              <div><div style="font-size:13px;font-weight:500">Reynerd Putra</div><div style="font-size:11px;color:var(--fg-muted)">reynerd.putra@astronauts.id</div></div>
+              <span style="font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:6px;background:#fef3c7;color:#92400e">owner</span>
+              <span style="font-size:11.5px;font-weight:600;color:var(--success)">Active</span>
+            </div>
+          </div>
+        </div>
+
+        <h3 style="font-size:13px;font-weight:700;margin-bottom:9px;padding-bottom:6px;border-bottom:1px solid var(--border)">💾 Data</h3>
+        <div style="${card}">
+          <div style="padding:13px 14px;display:flex;gap:8px">
+            <button onclick="toast('⬇ Export started…')" style="background:var(--bg-card);color:var(--fg);border:1px solid var(--border-strong);border-radius:var(--radius-sm);padding:6px 11px;font-size:12.5px;cursor:pointer">⬇ Export JSON</button>
+            <button onclick="toast('Type DELETE to confirm — real app only')" style="background:var(--bg-card);color:var(--danger);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 11px;font-size:12.5px;cursor:pointer">🗑 Clear all data</button>
+          </div>
+        </div>
+
+      </div>
+    </div>`;
+}
+
 function render() {
   renderSidebar();
-  if (S.view === 'story')        renderStory();
-  else if (S.view === 'meeting') renderMeeting();
-  else if (S.view === 'myboard') renderMyBoard();
-  else if (S.view === 'inbox')   renderMyBoard();
-  else if (S.view === 'project') renderProject();
+  if (S.view === 'story')           renderStory();
+  else if (S.view === 'meeting')    renderMeeting();
+  else if (S.view === 'myboard')    renderMyBoard();
+  else if (S.view === 'inbox')      renderMyBoard();
+  else if (S.view === 'project')    renderProject();
+  else if (S.view === 'settings')   renderSettings();
 }
 
 // keyboard shortcuts
