@@ -1,0 +1,2674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>MeetingFlow — Prototype v2</title>
+<style>
+:root{--bg:#f7f7fb;--bg-card:#fff;--bg-sidebar:#14152a;--bg-sidebar-hover:#1f2140;--bg-sidebar-active:#2a2d5a;--fg:#1a1b2e;--fg-muted:#6b6f86;--fg-faint:#9aa0b4;--fg-sidebar:#e8e9f3;--fg-sidebar-muted:#9398b8;--border:#e6e8f0;--border-strong:#d3d6e3;--accent:#4f46e5;--accent-soft:#eef2ff;--success:#10b981;--success-soft:#d1fae5;--warn:#f59e0b;--warn-soft:#fef3c7;--danger:#ef4444;--danger-soft:#fee2e2;--shadow-sm:0 1px 2px rgba(15,18,40,.05);--shadow-md:0 4px 16px rgba(15,18,40,.08);--radius:10px;--radius-sm:6px}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--fg);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:3px}
+.shell{display:flex;height:100vh;overflow:hidden}
+
+/* SIDEBAR */
+.sidebar{width:272px;flex-shrink:0;background:var(--bg-sidebar);color:var(--fg-sidebar);display:flex;flex-direction:column;overflow:hidden}
+.sb-head{padding:14px 13px 9px;border-bottom:1px solid rgba(255,255,255,.06)}
+.sb-logo{font-size:15px;font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:2px}
+.sb-logo-icon{width:22px;height:22px;border-radius:5px;background:linear-gradient(135deg,#6366f1,#a855f7);display:grid;place-items:center;font-size:11px;flex-shrink:0}
+.sb-org{font-size:10px;color:var(--fg-sidebar-muted)}
+.sb-quick{padding:7px 9px 4px;display:flex;gap:5px}
+.sb-btn{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);color:var(--fg-sidebar);border-radius:5px;padding:4px 9px;font-size:11px;cursor:pointer;transition:background .15s;white-space:nowrap}
+.sb-btn:hover{background:rgba(255,255,255,.14)}
+.sb-search{padding:0 9px 5px;position:relative}
+.sb-search input{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:var(--fg-sidebar);padding:5px 8px 5px 22px;border-radius:5px;font-size:11.5px;outline:none}
+.sb-search input::placeholder{color:var(--fg-sidebar-muted)}
+.sb-search-ico{position:absolute;left:17px;top:50%;transform:translateY(-50%);opacity:.4;font-size:11px;pointer-events:none}
+.sb-section{font-size:9px;font-weight:700;letter-spacing:.08em;color:var(--fg-sidebar-muted);text-transform:uppercase;padding:4px 13px 3px}
+.sb-scroll{flex:1;overflow-y:auto;padding-bottom:8px}
+.sb-nav{display:flex;align-items:center;gap:6px;padding:5px 13px;font-size:12px;color:var(--fg-sidebar-muted);cursor:pointer;transition:background .12s;user-select:none}
+.sb-nav:hover,.sb-nav.active{background:var(--bg-sidebar-hover);color:var(--fg-sidebar)}
+.sb-nav.active{background:var(--bg-sidebar-active)}
+.sb-badge{font-size:10px;background:rgba(255,255,255,.1);padding:1px 5px;border-radius:7px;margin-left:auto}
+.proj-row{display:flex;align-items:center;gap:6px;padding:5px 9px;cursor:pointer;transition:background .12s;user-select:none}
+.proj-row:hover{background:var(--bg-sidebar-hover)}
+.proj-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.proj-name{font-size:12px;font-weight:600;color:var(--fg-sidebar);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.proj-chev{font-size:9px;color:var(--fg-sidebar-muted);transition:transform .15s;flex-shrink:0}
+.proj-chev.open{transform:rotate(90deg)}
+.proj-children{padding:1px 0 2px 16px}
+.proj-drag-target{border-top:2px solid var(--accent) !important}
+.proj-pin{visibility:hidden;padding:1px 3px;background:none;border:none;cursor:pointer;font-size:10px;flex-shrink:0;line-height:1;opacity:.45;transition:opacity .12s}
+.proj-row:hover .proj-pin,.proj-pin.pinned{visibility:visible}
+.proj-pin.pinned{opacity:1}
+.story-row{display:flex;align-items:center;gap:5px;padding:4px 9px;border-radius:4px;cursor:pointer;font-size:11.5px;color:var(--fg-sidebar-muted);transition:background .12s;margin-bottom:1px;user-select:none}
+.story-row:hover{background:var(--bg-sidebar-hover);color:var(--fg-sidebar)}
+.story-row.active{background:var(--bg-sidebar-active);color:var(--fg-sidebar)}
+.story-chev{font-size:8px;color:var(--fg-sidebar-muted);transition:transform .15s;flex-shrink:0}
+.story-chev.open{transform:rotate(90deg)}
+.mtg-sb-row{display:flex;align-items:center;gap:5px;padding:3px 9px;border-radius:4px;font-size:11px;color:var(--fg-sidebar-muted);cursor:pointer;margin-bottom:1px;transition:background .12s;user-select:none}
+.mtg-sb-row:hover{background:var(--bg-sidebar-hover);color:var(--fg-sidebar)}
+.mtg-sb-row.active{background:var(--bg-sidebar-active);color:var(--fg-sidebar)}
+.mtg-sb-dot{width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,.18);flex-shrink:0}
+.mtg-sb-dot.active{background:var(--accent)}
+.sb-add-btn{display:flex;align-items:center;gap:4px;padding:3px 9px;border-radius:4px;font-size:11px;color:var(--fg-sidebar-muted);background:transparent;border:none;cursor:pointer;width:100%;text-align:left;transition:background .12s}
+.sb-add-btn:hover{background:var(--bg-sidebar-hover);color:var(--fg-sidebar)}
+.sb-footer{padding:8px 10px;border-top:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:6px;flex-shrink:0}
+.sb-avatar{width:25px;height:25px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#a855f7);display:grid;place-items:center;font-size:10px;font-weight:700;color:white;flex-shrink:0}
+.sb-user{font-size:11.5px;font-weight:600;color:var(--fg-sidebar);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-ico{background:transparent;border:1px solid rgba(255,255,255,.1);color:var(--fg-sidebar-muted);padding:3px 6px;border-radius:4px;font-size:11px;cursor:pointer}
+
+/* MAIN */
+.main{flex:1;display:flex;overflow:hidden}
+
+/* TOPBAR */
+.topbar{background:var(--bg-card);border-bottom:1px solid var(--border);padding:13px 22px 0;flex-shrink:0}
+.breadcrumb{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.crumb{font-size:11.5px;color:var(--fg-muted);background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:2px 8px;cursor:pointer;transition:all .14s}
+.crumb:hover{border-color:var(--accent);color:var(--accent)}
+.crumb-sep{font-size:11px;color:var(--fg-faint)}
+.badge{display:inline-flex;align-items:center;gap:4px;border-radius:4px;padding:2px 7px;font-size:10.5px;font-weight:700;letter-spacing:.02em}
+
+/* STORY VIEW */
+.story-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.story-title-row{display:flex;align-items:center;gap:10px;margin-bottom:5px}
+.story-title{font-size:18px;font-weight:700;letter-spacing:-.02em}
+.status-pill{padding:2px 9px;border-radius:7px;font-size:10.5px;font-weight:600}
+.story-meta{display:flex;align-items:center;gap:14px;margin-bottom:12px}
+.meta-chip{font-size:11.5px;color:var(--fg-muted);display:flex;align-items:center;gap:4px}
+.tabs{display:flex}
+.tab{padding:8px 14px;font-size:12.5px;font-weight:500;cursor:pointer;background:none;border:none;color:var(--fg-muted);border-bottom:2px solid transparent;transition:all .14s;display:flex;align-items:center;gap:5px;white-space:nowrap;margin-bottom:-1px}
+.tab:hover{color:var(--fg)}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab-badge{background:var(--accent-soft);color:var(--accent);border-radius:9px;padding:1px 6px;font-size:10px;font-weight:700}
+.tab.active .tab-badge{background:var(--accent);color:white}
+.tab-body{flex:1;overflow-y:auto;padding:16px 20px 40px}
+
+/* MEETING CARD (story view) */
+.add-mtg-btn{display:flex;align-items:center;gap:8px;width:100%;padding:11px 15px;background:var(--accent-soft);border:1.5px dashed rgba(79,70,229,.35);border-radius:var(--radius);color:var(--accent);font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;margin-bottom:12px;text-align:left}
+.add-mtg-btn:hover{background:rgba(79,70,229,.12);border-color:var(--accent)}
+.mtg-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:10px;box-shadow:var(--shadow-sm);transition:box-shadow .14s,border-color .14s}
+.mtg-card:hover{border-color:var(--border-strong);box-shadow:var(--shadow-md)}
+.mtg-card-head{display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;user-select:none}
+.mtg-date-block{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:5px 10px;text-align:center;flex-shrink:0;min-width:46px}
+.mtg-month{font-size:9px;font-weight:700;text-transform:uppercase;color:var(--accent);letter-spacing:.05em}
+.mtg-day{font-size:18px;font-weight:800;line-height:1.1;color:var(--fg)}
+.mtg-info{flex:1;min-width:0}
+.mtg-title{font-size:13px;font-weight:600;margin-bottom:3px;color:var(--fg)}
+.mtg-meta{font-size:11.5px;color:var(--fg-muted);display:flex;gap:10px;flex-wrap:wrap}
+.mtg-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.tasks-pill{border-radius:9px;padding:2px 8px;font-size:10.5px;font-weight:600;background:var(--success-soft);color:var(--success)}
+.expand-ico{color:var(--fg-faint);font-size:10px;transition:transform .2s;padding:3px;background:none;border:none;cursor:pointer;flex-shrink:0}
+.expand-ico.open{transform:rotate(180deg)}
+.open-link{font-size:11.5px;color:var(--accent);background:var(--accent-soft);border:none;border-radius:var(--radius-sm);padding:4px 10px;cursor:pointer;font-weight:500;white-space:nowrap}
+.open-link:hover{background:rgba(79,70,229,.15)}
+.mtg-body{border-top:1px solid var(--border);padding:14px 16px;display:none}
+.mtg-body.open{display:block}
+.body-grid{display:grid;gap:12px}
+.body-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--fg-faint);margin-bottom:5px}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:2px 10px;font-size:11.5px;color:var(--fg-muted)}
+.notes-box{font-size:12.5px;color:var(--fg-muted);line-height:1.65;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 13px}
+.mini-tasks{display:flex;flex-direction:column;gap:3px}
+.mini-task{display:flex;align-items:center;gap:8px;padding:5px 10px;background:var(--bg);border-radius:var(--radius-sm);font-size:12px;cursor:pointer}
+.mini-task:hover{background:var(--border)}
+.mini-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.mini-task.done .mini-task-txt{text-decoration:line-through;opacity:.5}
+.mini-assignee{margin-left:auto;font-size:11px;color:var(--fg-muted);flex-shrink:0}
+
+/* STORY AI SUMMARY */
+.story-ai-summary{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin:0 20px 14px;box-shadow:var(--shadow-sm);position:relative}
+.story-ai-summary.collapsed{padding-bottom:12px}
+.sas-header{display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none}
+.sas-icon{font-size:14px;flex-shrink:0}
+.sas-label{font-size:11.5px;font-weight:700;color:var(--fg-muted);text-transform:uppercase;letter-spacing:.05em;flex:1}
+.sas-toggle{font-size:11px;color:var(--fg-faint);background:none;border:none;cursor:pointer;padding:0;font-family:inherit;transition:color .14s}
+.sas-toggle:hover{color:var(--fg)}
+.sas-body{margin-top:10px;font-size:13px;color:var(--fg);line-height:1.65}
+.sas-body p{margin:0 0 8px}
+.sas-body p:last-child{margin-bottom:0}
+.sas-body ul{margin:4px 0 8px 16px;padding:0}
+.sas-body li{margin-bottom:3px}
+.sas-meta{margin-top:8px;font-size:11px;color:var(--fg-faint);display:flex;align-items:center;gap:8px}
+.sas-actions{display:flex;align-items:center;gap:6px}
+.sas-gen-btn{background:none;border:1px solid var(--border);border-radius:var(--radius-sm);padding:4px 10px;font-size:11.5px;color:var(--fg-muted);cursor:pointer;transition:all .14s;font-family:inherit}
+.sas-gen-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+@keyframes sas-pulse{0%,100%{opacity:.6}50%{opacity:1}}
+.sas-generating{animation:sas-pulse 1.2s ease infinite;color:var(--accent);font-size:12.5px}
+
+/* MEETING EDITOR */
+.mtg-editor-wrap{flex:1;display:flex;overflow:hidden}
+.mtg-editor-left{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.mtg-editor-topbar{background:var(--bg-card);border-bottom:1px solid var(--border);padding:13px 22px;flex-shrink:0}
+.mtg-title-editable{font-size:20px;font-weight:700;letter-spacing:-.02em;border:none;background:transparent;color:var(--fg);outline:none;width:100%;padding:2px 4px;border-radius:4px;transition:background .14s}
+.mtg-title-editable:hover{background:var(--bg)}
+.mtg-title-editable:focus{background:var(--accent-soft);outline:2px solid var(--accent);outline-offset:0}
+.editor-meta-row{display:flex;align-items:center;gap:14px;margin-top:7px}
+.editor-body{flex:1;overflow-y:auto;padding:20px 22px 40px}
+.editor-section{margin-bottom:22px}
+.editor-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--fg-faint);margin-bottom:8px}
+.attendee-input-row{display:flex;gap:6px;align-items:center}
+.attendee-input{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 10px;font-size:12.5px;color:var(--fg);outline:none}
+.attendee-input:focus{border-color:var(--accent);background:var(--accent-soft)}
+.notes-editor{width:100%;min-height:180px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;font-size:13px;color:var(--fg);line-height:1.7;outline:none;resize:vertical;font-family:inherit}
+.notes-editor:focus{border-color:var(--accent)}
+.mom-display{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px}
+.mom-block{margin-bottom:16px}.mom-block:last-child{margin-bottom:0}
+.mom-heading{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--fg-muted);margin-bottom:8px}
+.mom-list{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:5px}
+.mom-list li{font-size:12.5px;color:var(--fg);padding-left:14px;position:relative;line-height:1.55}
+.mom-list li::before{content:'•';position:absolute;left:0;color:var(--accent);font-weight:700}
+.mom-empty{font-size:12.5px;color:var(--fg-muted);opacity:.6;font-style:italic;padding:8px 0}
+.ai-summary-box{background:linear-gradient(135deg,rgba(99,102,241,.06),rgba(168,85,247,.06));border:1px solid rgba(99,102,241,.2);border-radius:var(--radius);padding:14px 16px}
+.ai-summary-text{font-size:12.5px;line-height:1.7;color:var(--fg-muted)}
+.ai-typing::after{content:"▊";animation:blink .7s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.gen-btn{background:linear-gradient(135deg,#6366f1,#a855f7);color:white;border:none;border-radius:var(--radius-sm);padding:7px 14px;font-size:12.5px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;transition:opacity .14s}
+.gen-btn:hover{opacity:.88}
+.gen-btn:disabled{opacity:.55;cursor:not-allowed}
+.add-task-row{display:flex;gap:6px;margin-bottom:8px}
+.add-task-input{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 10px;font-size:12.5px;color:var(--fg);outline:none}
+.add-task-input:focus{border-color:var(--accent)}
+/* meeting action items — read-only */
+.action-item{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:5px;cursor:pointer;transition:all .14s}
+.action-item:hover{border-color:var(--border-strong);box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.ai-title{font-size:12.5px;flex:1;color:var(--fg);min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ai-due{font-size:10.5px;color:var(--fg-muted);flex-shrink:0}
+.ai-due.overdue{color:var(--danger);font-weight:600}
+/* KANBAN */
+.kanban-board{display:flex;gap:12px;overflow-x:auto;padding:2px 0 16px;min-height:0;flex:1}
+.kanban-col{flex:0 0 240px;display:flex;flex-direction:column;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.kc-head{padding:10px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);flex-shrink:0}
+.kc-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.kc-count{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:0 7px;font-size:10.5px;font-weight:700;color:var(--fg-muted)}
+.kc-body{flex:1;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:6px;min-height:80px}
+.kanban-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 11px;cursor:pointer;transition:all .14s}
+.kanban-card:hover{border-color:var(--accent);box-shadow:0 2px 8px rgba(79,70,229,.1)}
+.kcard-title{font-size:12.5px;font-weight:500;color:var(--fg);line-height:1.4;margin-bottom:6px}
+.kcard-desc{font-size:11px;color:var(--fg-muted);line-height:1.4;margin-bottom:7px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.kcard-footer{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.kcard-prio{font-size:10px;font-weight:600;padding:1px 6px;border-radius:5px}
+.kcard-due{font-size:10px;color:var(--fg-muted)}
+.kcard-due.overdue{color:var(--danger);font-weight:600}
+.kcard-av{width:18px;height:18px;border-radius:50%;font-size:9px;font-weight:700;display:grid;place-items:center;margin-left:auto;flex-shrink:0}
+.kc-add{border:none;background:none;width:100%;padding:8px 12px;font-size:12px;color:var(--fg-muted);cursor:pointer;text-align:left;border-top:1px solid var(--border);transition:all .14s;font-family:inherit;flex-shrink:0}
+.kc-add:hover{background:var(--accent-soft);color:var(--accent)}
+.kc-body.drag-over{background:var(--accent-soft);border-radius:var(--radius-sm);outline:2px dashed rgba(79,70,229,.4)}
+.kanban-card.dragging{opacity:.4;cursor:grabbing}
+/* COMPLETION FORM */
+.cf-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1100;display:flex;align-items:center;justify-content:center;padding:24px;overflow-y:auto}
+.cf-modal{background:var(--bg-card);border-radius:var(--radius);width:100%;max-width:580px;box-shadow:0 24px 64px rgba(0,0,0,.25);overflow:hidden;max-height:90vh;display:flex;flex-direction:column}
+.cf-head{padding:16px 20px;border-bottom:1px solid var(--border);flex-shrink:0}
+.cf-title{font-size:15px;font-weight:700;color:var(--fg);margin-bottom:2px}
+.cf-sub{font-size:12px;color:var(--fg-muted)}
+.cf-body{padding:16px 20px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;flex:1}
+.cf-input-tabs{display:flex;gap:6px;flex-wrap:wrap}
+.cf-tab{display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:var(--radius-sm);font-size:12.5px;font-weight:500;cursor:pointer;border:1.5px solid var(--border);background:var(--bg);color:var(--fg-muted);transition:all .14s;font-family:inherit}
+.cf-tab:hover{border-color:var(--border-strong);color:var(--fg)}
+.cf-tab.active{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.cf-input-area{display:flex;flex-direction:column;gap:10px}
+.cf-label{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--fg-faint);margin-bottom:4px}
+.cf-textarea{width:100%;min-height:90px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;font-size:13px;color:var(--fg);outline:none;resize:vertical;font-family:inherit;line-height:1.6;box-sizing:border-box}
+.cf-textarea:focus{border-color:var(--accent)}
+.cf-dropzone{border:1.5px dashed var(--border-strong);border-radius:var(--radius-sm);padding:18px;text-align:center;cursor:pointer;font-size:12.5px;color:var(--fg-muted);transition:all .14s;background:var(--bg)}
+.cf-dropzone:hover{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.cf-attachments{display:flex;flex-wrap:wrap;gap:6px}
+.cf-attachment{display:flex;align-items:center;gap:6px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:5px 10px;font-size:12px;color:var(--fg)}
+.cf-attachment button{background:none;border:none;cursor:pointer;color:var(--fg-faint);font-size:13px;padding:0;line-height:1}
+.cf-attachment button:hover{color:var(--danger)}
+.cf-record-btn{display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;cursor:pointer;border:1.5px solid rgba(239,68,68,.3);background:rgba(239,68,68,.06);color:var(--danger);transition:all .14s;font-family:inherit;width:100%;justify-content:center}
+.cf-record-btn.recording{background:var(--danger);color:white;border-color:var(--danger);animation:rec-pulse 1.2s ease infinite}
+@keyframes rec-pulse{0%,100%{opacity:1}50%{opacity:.8}}
+.cf-recording-chip{display:flex;align-items:center;gap:8px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:var(--radius-sm);padding:8px 12px;font-size:12.5px;color:var(--danger)}
+.cf-result-box{background:linear-gradient(135deg,rgba(99,102,241,.05),rgba(16,185,129,.05));border:1px solid rgba(99,102,241,.18);border-radius:var(--radius-sm);padding:14px 16px;font-size:12.5px;color:var(--fg);line-height:1.7}
+.cf-result-box h3{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);font-weight:700;margin:12px 0 4px}
+.cf-result-box h3:first-child{margin-top:0}
+.cf-result-box ul{margin:0 0 4px 14px;padding:0}
+.cf-result-box li{margin-bottom:2px}
+.cf-footer{padding:12px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;flex-shrink:0}
+/* TASK MODAL */
+.task-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;display:flex;align-items:flex-start;justify-content:center;padding:32px 16px;overflow-y:auto}
+.task-modal{background:var(--bg-card);border-radius:var(--radius);width:100%;max-width:780px;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.2);min-height:0}
+.tm-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:12px}
+.tm-task-id{display:inline-block;font-size:11px;font-weight:700;font-family:monospace;color:var(--accent);letter-spacing:.04em;margin-bottom:5px;cursor:pointer;text-decoration:none;padding:1px 0;border-bottom:1px dashed rgba(79,70,229,.4);transition:all .12s}
+.tm-task-id:hover{color:#3730a3;border-bottom-color:#3730a3}
+.tm-title-input{width:100%;font-size:17px;font-weight:700;border:none;background:transparent;color:var(--fg);outline:none;font-family:inherit;padding:2px 0;box-sizing:border-box}
+.tm-title-input::placeholder{color:var(--fg-faint)}
+.tm-close{background:none;border:none;font-size:20px;color:var(--fg-muted);cursor:pointer;padding:0 4px;line-height:1;flex-shrink:0}
+.tm-body{display:flex;flex:1;overflow:hidden}
+.tm-main{flex:1;padding:18px 20px;overflow-y:auto;display:flex;flex-direction:column;gap:16px}
+.tm-sidebar{width:200px;flex-shrink:0;border-left:1px solid var(--border);padding:16px 14px;display:flex;flex-direction:column;gap:14px;background:var(--bg)}
+.tm-field-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--fg-faint);margin-bottom:5px}
+.tm-select{width:100%;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:5px 8px;font-size:12px;color:var(--fg);outline:none;cursor:pointer;font-family:inherit}
+.tm-date-input{width:100%;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:5px 8px;font-size:12px;color:var(--fg);outline:none;font-family:inherit}
+.tm-desc{width:100%;min-height:100px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;font-size:13px;color:var(--fg);outline:none;resize:vertical;font-family:inherit;line-height:1.6;box-sizing:border-box}
+.tm-desc:focus{border-color:var(--accent)}
+.tm-attach-zone{border:1.5px dashed var(--border);border-radius:var(--radius-sm);padding:14px;text-align:center;cursor:pointer;font-size:12px;color:var(--fg-muted);transition:all .14s}
+.tm-attach-zone:hover{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.tm-divider{border:none;border-top:1px solid var(--border);margin:4px 0}
+.activity-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--fg-faint);margin-bottom:10px}
+.comment{display:flex;gap:9px;margin-bottom:12px}
+.comment-av{width:26px;height:26px;border-radius:50%;font-size:11px;font-weight:700;display:grid;place-items:center;flex-shrink:0}
+.comment-body{flex:1;min-width:0}
+.comment-meta{font-size:10.5px;color:var(--fg-muted);margin-bottom:3px}
+.comment-meta b{color:var(--fg);font-weight:600}
+.comment-text{font-size:12.5px;color:var(--fg);line-height:1.5;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 10px}
+.comment-input-row{display:flex;gap:8px;align-items:flex-start}
+.comment-input{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;font-size:12.5px;color:var(--fg);outline:none;resize:none;font-family:inherit;min-height:36px}
+.comment-input:focus{border-color:var(--accent)}
+.tm-save{background:var(--accent);color:white;border:none;border-radius:var(--radius-sm);padding:8px 18px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;transition:opacity .14s;flex-shrink:0}
+.tm-save:hover{opacity:.88}
+/* Priority pill colours */
+.prio-urgent{background:var(--danger-soft);color:var(--danger)}
+.prio-high{background:var(--warn-soft);color:#b45309}
+.prio-medium{background:var(--accent-soft);color:var(--accent)}
+.prio-low{background:var(--bg);color:var(--fg-muted);border:1px solid var(--border)}
+.tli-assign{font-size:10.5px;color:var(--fg-muted);background:var(--bg-card);border:1px solid var(--border);border-radius:3px;padding:1px 5px;flex-shrink:0;cursor:pointer}
+
+/* MEETING EDITOR RIGHT PANEL */
+.mtg-editor-right{width:250px;flex-shrink:0;border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;background:var(--bg-card)}
+.er-head{padding:12px 14px;border-bottom:1px solid var(--border);font-size:12.5px;font-weight:700;flex-shrink:0}
+.er-scroll{flex:1;overflow-y:auto;padding:12px}
+.er-section{margin-bottom:16px}
+.er-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--fg-faint);margin-bottom:6px}
+.er-stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.er-stat{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;text-align:center}
+.er-stat-val{font-size:20px;font-weight:800;color:var(--fg)}
+.er-stat-lbl{font-size:10px;color:var(--fg-muted)}
+.er-person{display:flex;align-items:center;gap:7px;padding:5px 6px;border-radius:var(--radius-sm);font-size:12px;color:var(--fg-muted)}
+.er-avatar{width:22px;height:22px;border-radius:50%;font-size:10px;font-weight:700;display:grid;place-items:center;flex-shrink:0}
+
+/* INBOX VIEW */
+.inbox-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.board-filters{display:flex;align-items:center;gap:7px;padding:10px 22px 12px;flex-wrap:wrap}
+.board-search{display:flex;align-items:center;gap:7px;background:var(--bg);border:1.5px solid var(--border);border-radius:20px;padding:6px 13px;flex:0 0 260px;transition:border-color .15s,box-shadow .15s}
+.board-search:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px rgba(79,70,229,.08)}
+.board-search input{border:none;background:transparent;font-size:12.5px;color:var(--fg);outline:none;flex:1;min-width:0}
+.board-search input::placeholder{color:var(--fg-faint)}
+.filter-dropdown{position:relative}
+.filter-btn{display:flex;align-items:center;gap:5px;padding:5px 13px;border:1.5px solid var(--border);border-radius:20px;background:var(--bg-card);color:var(--fg-muted);font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;white-space:nowrap}
+.filter-btn:hover{border-color:rgba(79,70,229,.4);color:var(--fg);background:var(--bg)}
+.filter-btn.active{border-color:var(--accent);color:#fff;background:var(--accent);box-shadow:0 1px 6px rgba(79,70,229,.3)}
+.filter-btn.active:hover{background:#4338ca}
+.filter-panel{position:absolute;top:calc(100% + 6px);left:0;min-width:185px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.12);z-index:200;overflow:hidden;display:none;padding:4px 0}
+.filter-panel.open{display:block}
+.fpi{padding:8px 14px;font-size:12.5px;color:var(--fg);cursor:pointer;display:flex;align-items:center;gap:8px;transition:background .12s}
+.fpi:hover{background:var(--bg)}
+.fpi.sel{color:var(--accent);font-weight:600}
+.fpi-check{width:14px;font-size:10px;flex-shrink:0;text-align:center;color:var(--accent)}
+.filter-sep{height:1px;background:var(--border);margin:4px 0}
+.nbt-tab{flex:1;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--fg-muted);font-size:12.5px;font-weight:500;cursor:pointer;transition:all .14s;font-family:inherit}
+.nbt-tab:hover{border-color:rgba(79,70,229,.4);color:var(--fg)}
+.nbt-tab.active{border-color:var(--accent);color:var(--accent);background:var(--accent-soft);font-weight:600}
+.inbox-head{background:var(--bg-card);border-bottom:1px solid var(--border);padding:18px 22px;flex-shrink:0}
+.inbox-title{font-size:20px;font-weight:700;letter-spacing:-.02em}
+.inbox-sub{font-size:13px;color:var(--fg-muted);margin-top:2px}
+.inbox-body{flex:1;overflow-y:auto;padding:18px 22px 40px}
+.inbox-group{margin-bottom:20px}
+.inbox-group-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--fg-faint);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.inbox-task{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:5px;cursor:pointer;transition:all .14s;box-shadow:var(--shadow-sm)}
+.inbox-task:hover{border-color:var(--border-strong);box-shadow:var(--shadow-md)}
+
+/* MEMO/VOICE/FILES tabs */
+.memo-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;box-shadow:var(--shadow-sm);cursor:pointer;transition:all .14s}
+.memo-card:hover{border-color:var(--border-strong);box-shadow:var(--shadow-md)}
+.memo-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px}
+.memo-title{font-size:13px;font-weight:600}
+.memo-body{font-size:12.5px;color:var(--fg-muted);line-height:1.65}
+.voice-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;display:flex;align-items:center;gap:12px;margin-bottom:10px;box-shadow:var(--shadow-sm);cursor:pointer;transition:all .14s}
+.voice-card:hover{border-color:var(--border-strong);box-shadow:var(--shadow-md)}
+.play-btn{width:34px;height:34px;border-radius:50%;background:var(--accent-soft);border:1px solid rgba(79,70,229,.25);color:var(--accent);display:grid;place-items:center;cursor:pointer;font-size:12px;flex-shrink:0;transition:all .14s}
+.play-btn:hover{background:var(--accent);color:white}
+.waveform{flex:1;height:26px;background:var(--bg);border-radius:4px;display:flex;align-items:center;padding:0 6px;gap:2px;overflow:hidden}
+.wbar{width:3px;border-radius:2px;background:var(--accent);opacity:.35;flex-shrink:0}
+.file-row{display:flex;align-items:center;gap:10px;padding:10px 13px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:6px;cursor:pointer;transition:all .14s;box-shadow:var(--shadow-sm)}
+.file-row:hover{border-color:var(--border-strong);box-shadow:var(--shadow-md)}
+.drop-zone{padding:20px;background:var(--bg);border:1.5px dashed var(--border-strong);border-radius:var(--radius);text-align:center;color:var(--fg-muted);font-size:12.5px;cursor:pointer;transition:all .14s;margin-top:10px}
+.drop-zone:hover{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+
+/* FILTER CHIPS */
+.fchip{padding:4px 11px;border-radius:9px;font-size:11.5px;cursor:pointer;background:none;border:1px solid transparent;color:var(--fg-muted);transition:all .14s;white-space:nowrap;font-family:inherit}
+.fchip.active{background:var(--accent-soft);color:var(--accent);border-color:rgba(79,70,229,.25)}
+.fchip:hover:not(.active){background:var(--bg);border-color:var(--border)}
+
+/* BUTTONS */
+.btn-primary{background:var(--accent);color:white;border:none;border-radius:var(--radius-sm);padding:6px 13px;font-size:12.5px;font-weight:500;cursor:pointer;transition:background .14s}
+.btn-primary:hover{background:#4338ca}
+.btn-ghost{background:var(--bg-card);color:var(--fg-muted);border:1px solid var(--border);border-radius:var(--radius-sm);padding:5px 11px;font-size:12px;cursor:pointer;transition:all .14s}
+.btn-ghost:hover{border-color:var(--border-strong);color:var(--fg)}
+.btn-danger{background:var(--danger-soft);color:var(--danger);border:1px solid rgba(239,68,68,.2);border-radius:var(--radius-sm);padding:5px 11px;font-size:12px;cursor:pointer;transition:all .14s}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(15,18,40,.45);display:flex;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(2px)}
+.modal-box{background:var(--bg-card);border-radius:var(--radius);box-shadow:0 20px 60px rgba(15,18,40,.2);padding:24px;width:420px;max-width:90vw}
+.modal-title{font-size:15px;font-weight:700;margin-bottom:4px}
+.modal-sub{font-size:12.5px;color:var(--fg-muted);margin-bottom:16px}
+.modal-field{margin-bottom:12px}
+.modal-label{font-size:11px;font-weight:600;color:var(--fg-muted);margin-bottom:4px}
+.modal-input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 11px;font-size:13px;color:var(--fg);outline:none;font-family:inherit}
+.modal-input:focus{border-color:var(--accent)}
+.modal-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+
+/* PROJECT VIEW */
+.proj-stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:0}
+.proj-stat{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;text-align:center}
+.proj-stat-val{font-size:22px;font-weight:800;color:var(--fg)}
+.proj-stat-lbl{font-size:10.5px;color:var(--fg-muted);margin-top:1px}
+.story-overview-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:10px;box-shadow:var(--shadow-sm);transition:box-shadow .14s,border-color .14s;cursor:pointer}
+.story-overview-card:hover{border-color:var(--border-strong);box-shadow:var(--shadow-md)}
+.soc-head{display:flex;align-items:center;gap:12px;padding:13px 16px}
+.soc-icon{width:30px;height:30px;border-radius:7px;background:var(--accent-soft);display:grid;place-items:center;font-size:14px;flex-shrink:0}
+.soc-info{flex:1;min-width:0}
+.soc-name{font-size:13px;font-weight:600;margin-bottom:2px}
+.soc-meta{font-size:11.5px;color:var(--fg-muted);display:flex;gap:10px}
+.soc-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.soc-body{border-top:1px solid var(--border);padding:10px 16px}
+.prog-bar{height:4px;background:var(--border);border-radius:2px;margin:8px 0 10px;overflow:hidden}
+.prog-fill{height:100%;border-radius:2px;background:var(--accent);transition:width .3s}
+.soc-mtg-list{display:flex;flex-direction:column;gap:4px}
+.soc-mtg-row{display:flex;align-items:center;gap:8px;padding:5px 10px;background:var(--bg);border-radius:var(--radius-sm);font-size:11.5px;color:var(--fg-muted);cursor:pointer;transition:background .12s}
+.soc-mtg-row:hover{background:var(--border);color:var(--fg)}
+.soc-mtg-date{width:28px;height:22px;border-radius:4px;background:var(--accent-soft);color:var(--accent);font-size:10px;font-weight:700;display:grid;place-items:center;flex-shrink:0}
+.proj-row.active-proj .proj-name{color:var(--fg-sidebar)}
+
+/* CONTENT CREATION MODAL */
+.modal-box.wide{width:580px}
+.input-method-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+.input-method-card{border:1.5px solid var(--border);border-radius:var(--radius);padding:12px 10px;cursor:pointer;transition:all .15s;text-align:center;background:var(--bg)}
+.input-method-card:hover{border-color:var(--accent);background:var(--accent-soft)}
+.input-method-card.selected{border-color:var(--accent);background:var(--accent-soft)}
+.imc-icon{font-size:22px;margin-bottom:5px}
+.imc-label{font-size:12.5px;font-weight:600;color:var(--fg);margin-bottom:2px}
+.imc-sub{font-size:10.5px;color:var(--fg-muted)}
+.content-input-area{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);min-height:120px;overflow:hidden;transition:border-color .14s}
+.content-input-area:focus-within{border-color:var(--accent)}
+.content-textarea{width:100%;min-height:120px;background:transparent;border:none;padding:12px 14px;font-size:13px;color:var(--fg);line-height:1.7;outline:none;resize:vertical;font-family:inherit}
+.file-drop-area{padding:28px 20px;text-align:center;cursor:pointer;transition:all .15s}
+.file-drop-area:hover,.file-drop-area.dragover{background:var(--accent-soft)}
+.file-drop-icon{font-size:28px;margin-bottom:7px}
+.file-drop-label{font-size:13px;font-weight:500;color:var(--fg-muted);margin-bottom:3px}
+.file-drop-sub{font-size:11px;color:var(--fg-faint)}
+.ai-action-row{display:flex;align-items:center;gap:8px;margin-top:12px}
+.btn-ai{background:linear-gradient(135deg,#6366f1,#a855f7);color:white;border:none;border-radius:var(--radius-sm);padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:7px;transition:opacity .14s}
+.btn-ai:hover{opacity:.88}
+.btn-ai:disabled{opacity:.5;cursor:not-allowed}
+.btn-quick{background:var(--warn-soft);color:#b45309;border:1px solid rgba(245,158,11,.3);border-radius:var(--radius-sm);padding:7px 14px;font-size:13px;font-weight:500;cursor:pointer}
+.btn-quick:hover{background:rgba(245,158,11,.2)}
+.ai-hint{font-size:11.5px;color:var(--fg-faint);margin-top:5px}
+.ai-hint b{color:var(--fg-muted)}
+.ai-processing{display:flex;align-items:center;gap:10px;padding:14px 16px;background:linear-gradient(135deg,rgba(99,102,241,.06),rgba(168,85,247,.06));border:1px solid rgba(99,102,241,.2);border-radius:var(--radius-sm);font-size:13px;color:var(--fg-muted)}
+.ai-spinner{width:16px;height:16px;border:2px solid rgba(99,102,241,.25);border-top-color:#6366f1;border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ai-typing-cursor::after{content:"▊";animation:blink .6s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.extracted-tasks{margin-top:14px;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.et-header{padding:9px 13px;background:var(--success-soft);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:7px;font-size:12px;font-weight:700;color:var(--success)}
+.et-task-row{display:flex;align-items:center;gap:8px;padding:8px 13px;border-bottom:1px solid var(--border);background:var(--bg-card)}
+.et-task-row:last-child{border-bottom:none}
+.et-check{width:14px;height:14px;border:1.5px solid var(--success);border-radius:3px;flex-shrink:0;background:var(--success);display:grid;place-items:center;color:white;font-size:9px}
+.et-task-txt{flex:1;font-size:12.5px;color:var(--fg);background:none;border:none;outline:none;font-family:inherit}
+.et-del{background:none;border:none;color:var(--fg-faint);cursor:pointer;font-size:13px;padding:1px 4px;border-radius:3px}
+.et-del:hover{background:var(--danger-soft);color:var(--danger)}
+.et-add{width:100%;padding:7px 13px;background:var(--bg);border:none;border-top:1px solid var(--border);text-align:left;font-size:12px;color:var(--fg-muted);cursor:pointer;display:flex;align-items:center;gap:6px}
+.et-add:hover{background:var(--accent-soft);color:var(--accent)}
+.modal-tabs{display:flex;border-bottom:1px solid var(--border);margin:-24px -24px 18px}
+.modal-tab{padding:10px 18px;font-size:13px;font-weight:500;cursor:pointer;color:var(--fg-muted);border-bottom:2px solid transparent;background:none;border-top:none;border-left:none;border-right:none;transition:all .14s}
+.modal-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+/* ATTENDEE TAGGER */
+.attendee-tagger{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:5px 8px;display:flex;flex-wrap:wrap;gap:5px;cursor:text;min-height:38px;align-items:center;transition:border-color .14s}
+.attendee-tagger:focus-within{border-color:var(--accent)}
+.at-chip{display:inline-flex;align-items:center;gap:4px;border-radius:20px;padding:3px 8px 3px 10px;font-size:12px;font-weight:500;white-space:nowrap;background:var(--accent-soft);color:var(--accent)}
+.at-chip.registered{background:var(--success-soft);color:#065f46}
+.at-chip-del{background:none;border:none;color:inherit;cursor:pointer;font-size:13px;line-height:1;opacity:.6;padding:0 1px;display:flex;align-items:center}
+.at-chip-del:hover{opacity:1}
+.at-input{border:none;background:transparent;outline:none;font-size:12.5px;color:var(--fg);min-width:100px;flex:1;padding:2px 2px;font-family:inherit}
+.at-dropdown{border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-card);box-shadow:var(--shadow-md);overflow:hidden;margin-top:3px;display:none;max-height:200px;overflow-y:auto}
+.at-dropdown.show{display:block}
+.at-option{display:flex;align-items:center;gap:8px;padding:7px 12px;cursor:pointer;font-size:12.5px;color:var(--fg);transition:background .12s}
+.at-option:hover{background:var(--accent-soft)}
+.at-option-ext{color:var(--fg-muted);border-top:1px solid var(--border);font-style:italic}
+.at-option-ext:hover{background:var(--bg);color:var(--fg)}
+.at-av{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:10px;font-weight:700;flex-shrink:0}
+
+/* TOAST */
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%) translateY(14px);background:#1a1b2e;color:white;padding:8px 14px;border-radius:7px;font-size:13px;box-shadow:0 20px 50px rgba(15,18,40,.2);opacity:0;transition:all .22s;z-index:999;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main" id="main"></div>
+</div>
+<div id="modal"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ==================== DATA ====================
+const COLORS = {lavani:'#6366f1', trial:'#f59e0b', test1:'#10b981'};
+const AVATAR_COLORS = {R:'#6366f1', B:'#10b981', C:'#f59e0b', J:'#a855f7'};
+
+const DB = {
+  projects: {
+    lavani: {id:'lavani', name:'Lavani Launch', color:'#6366f1'},
+    trial:  {id:'trial',  name:'Trial',         color:'#f59e0b'},
+    test1:  {id:'test1',  name:'test 1',        color:'#10b981'},
+  },
+  stories: {
+    'saint-goban': {id:'saint-goban', projectId:'lavani', name:'Saint Goban Meeting', status:'in_progress', dueDate:'2026-07-30', assignees:['Rey','Bintang','Cakra'], aiSummary:`<p><strong>Co-branding deal with Saint-Gobain for SEA division is progressing.</strong> 3 meetings held across June–July 2026, with 14 tasks generated.</p><p><strong>What's been decided:</strong> 3 colorways approved (Ivory White, Slate Grey, Deep Navy), budget confirmed at USD 120,000, payment terms settled at Net-30 + 30% upfront deposit after negotiation from Net-60. NDA signed.</p><p><strong>Outstanding:</strong> Sample pack delivery (due Jul 31), proforma invoice USD 36K, final contract revision, and contract signing scheduled for Jul 8. Production handover pending contract sign-off.</p><p><strong>Risks:</strong> Contract signing meeting (Jul 8) has no notes or MoM yet — confirm this meeting has taken place and follow up on legal exclusivity clause.</p>`, summaryCollapsed:false},
+    'q3':          {id:'q3',          projectId:'lavani', name:'Q3 Campaign Planning', status:'open'},
+    'product':     {id:'product',     projectId:'lavani', name:'Product Launch v2',    status:'open'},
+    'onboarding':  {id:'onboarding',  projectId:'trial',  name:'Onboarding Flow',      status:'open'},
+    'pricing':     {id:'pricing',     projectId:'trial',  name:'Pricing Review',       status:'open'},
+  },
+  meetings: {
+    m1: {id:'m1', storyId:'saint-goban', title:'Kick-off — Saint-Gobain × Lavani', date:'2026-06-23', attendees:['Rey Putra','Bintang Aditya','Cakra Yudha','Jean-Paul (Saint-Gobain)'], notes:'Saint-Gobain interested in co-branding Lavani Fabric line for SEA division.\n\nMOQ of 5,000 units minimum. Samples needed by end of July.\n\nJean-Paul: budget approval needs Paris HQ sign-off — expected within 2 weeks.\n\nNDA sent and acknowledged by all parties.',
+      mom:'<div class="mom-block"><div class="mom-heading">📋 Key Discussion Points</div><ul class="mom-list"><li>Saint-Gobain proposes co-branding Lavani Fabric line for the SEA division</li><li>MOQ: 5,000 units minimum — samples required by end of July</li><li>Budget approval pending Paris HQ sign-off (estimated 2 weeks)</li><li>NDA sent and acknowledged by all parties</li></ul></div><div class="mom-block"><div class="mom-heading">✅ Decisions Made</div><ul class="mom-list"><li>Proceed with sample preparation — 5 colorways</li><li>Hold contract finalization until Paris HQ budget is confirmed</li></ul></div><div class="mom-block"><div class="mom-heading">⚡ Next Steps</div><ul class="mom-list"><li><b>Rey</b> — Prepare sample pack (5 colorways) by July 31</li><li><b>Cakra</b> — Loop in legal on exclusivity clause</li><li><b>Cakra</b> — Confirm quality cert docs for Saint-Gobain</li><li><b>Jean-Paul</b> — Follow up with Paris HQ within 2 weeks</li></ul></div>',
+      taskIds:['t1','t2','t3','t4','t5'], aiSummary:'Saint-Gobain proposes co-branding deal for SEA division. Key terms: MOQ 5,000 units, budget capped at Paris HQ approval, NDA in progress. Next steps: samples by July, await budget confirmation.'},
+    m2: {id:'m2', storyId:'saint-goban', title:'Sample Review & Pricing Discussion', date:'2026-06-29', attendees:['Rey Putra','Jean-Paul (SG)','Marie (SG Finance)'], notes:'Jean-Paul approved 3 colorways: Ivory White, Slate Grey, Deep Navy.\n\nParis HQ approved USD 120,000 budget.\n\nMarie proposed Net-60 — Rey pushed back, settled on Net-30 + 30% upfront deposit.\n\nContract to be revised accordingly.', mom:'', taskIds:['t6','t7','t8'], aiSummary:'Budget approved USD 120K. Three colorways confirmed. Payment terms settled at Net-30 + 30% upfront after negotiation from Net-60.'},
+    m3: {id:'m3', storyId:'saint-goban', title:'Contract Signing & Production Handover', date:'2026-07-08', attendees:['Rey Putra','Bintang Aditya','Cakra Yudha','Jean-Paul (SG)','Marie (SG Finance)'], notes:'', mom:'', taskIds:['t9','t10'], aiSummary:''},
+    m4: {id:'m4', storyId:'q3', title:'Q3 Campaign Briefing', date:'2026-06-15', attendees:['Rey Putra','Bintang Aditya'], notes:'Discuss Q3 digital campaign strategy for Lavani.', mom:'', taskIds:[], aiSummary:''},
+  },
+  tasks: {
+    t1: {id:'t1', title:'Prepare sample pack (5 colorways)', description:'Create physical sample packs with 5 colorway options: Ivory White, Slate Grey, Deep Navy, Terracotta, Sage Green. Each pack should include fabric swatches and a spec sheet.', status:'in_progress', priority:'high', dueDate:'2026-07-31', assignee:'R', meetingId:'m1', storyId:'saint-goban', source:'meeting', attachments:[], comments:[{id:'c1',authorId:'R',author:'Rey Putra',text:'Starting on Ivory White and Slate Grey first. Will send drafts by Friday.',date:'Jun 24'},{id:'c2',authorId:'B',author:'Bintang Aditya',text:'Can you include Pantone reference codes in the spec sheet?',date:'Jun 25'}]},
+    t2: {id:'t2', title:'Draft co-branding proposal PDF', description:'Design and write the co-branding proposal for Saint-Gobain. Include brand guidelines, proposed product applications, and commercial terms summary.', status:'in_progress', priority:'medium', dueDate:'2026-07-20', assignee:'B', meetingId:'m1', storyId:'saint-goban', source:'meeting', attachments:[], comments:[]},
+    t3: {id:'t3', title:'Confirm MOQ with production team', description:'Verify production can meet the 5,000 unit MOQ requirement from Saint-Gobain.', status:'done', priority:'high', dueDate:'2026-06-25', assignee:'C', meetingId:'m1', storyId:'saint-goban', source:'meeting', attachments:[], comments:[{id:'c3',authorId:'C',author:'Cakra Yudha',text:'Confirmed. Production can handle 5K units with 3-week lead time.',date:'Jun 25'}]},
+    t4: {id:'t4', title:'Send NDA to Jean-Paul', description:'', status:'done', priority:'urgent', dueDate:'2026-06-24', assignee:'R', meetingId:'m1', storyId:'saint-goban', source:'meeting', attachments:[], comments:[]},
+    t5: {id:'t5', title:'Schedule HQ call for budget sign-off', description:'', status:'done', priority:'medium', dueDate:'2026-06-28', assignee:'B', meetingId:'m1', storyId:'saint-goban', source:'meeting', attachments:[], comments:[]},
+    t6: {id:'t6', title:'Revise contract — Net-30 + 30% deposit', description:'Update the draft contract to reflect agreed payment terms: Net-30 with 30% upfront deposit. Remove Net-60 clause. Legal team to review before sending.', status:'review', priority:'urgent', dueDate:'2026-07-02', assignee:'R', meetingId:'m2', storyId:'saint-goban', source:'meeting', attachments:[], comments:[{id:'c4',authorId:'R',author:'Rey Putra',text:'Contract updated. Sent to legal for final review — should be back by tomorrow.',date:'Jul 1'}]},
+    t7: {id:'t7', title:'Send approved samples to SG Jakarta warehouse', description:'Ship the 3 approved colorway samples (Ivory White, Slate Grey, Deep Navy) to Saint-Gobain Jakarta warehouse with proper labeling.', status:'open', priority:'medium', dueDate:'2026-07-15', assignee:'C', meetingId:'m2', storyId:'saint-goban', source:'meeting', attachments:[], comments:[]},
+    t8: {id:'t8', title:'Issue proforma invoice USD 36,000', description:'Issue proforma invoice for the 30% upfront deposit (30% × USD 120,000 = USD 36,000). Send to Marie at SG Finance.', status:'open', priority:'urgent', dueDate:'2026-07-05', assignee:'B', meetingId:'m2', storyId:'saint-goban', source:'meeting', attachments:[], comments:[]},
+    t9: {id:'t9', title:'Prepare final contract for signing', description:'', status:'open', priority:'high', dueDate:'2026-07-08', assignee:'R', meetingId:'m3', storyId:'saint-goban', source:'meeting', attachments:[], comments:[]},
+    t10:{id:'t10',title:'Notify production team after signing', description:'', status:'open', priority:'medium', dueDate:'2026-07-10', assignee:'C', meetingId:'m3', storyId:'saint-goban', source:'meeting', attachments:[], comments:[]},
+    t11:{id:'t11',title:'Loop in legal if exclusivity raised', description:'', status:'open', priority:'low', dueDate:'', assignee:'R', storyId:'saint-goban', source:'memo', attachments:[], comments:[]},
+    t12:{id:'t12',title:'Confirm quality cert docs for SG', description:'', status:'open', priority:'medium', dueDate:'2026-07-12', assignee:'C', storyId:'saint-goban', source:'memo', attachments:[], comments:[]},
+    t13:{id:'t13',title:'Prepare talking points on pricing flexibility', description:'', status:'done', priority:'medium', dueDate:'2026-06-20', assignee:'R', storyId:'saint-goban', source:'voice', attachments:[], comments:[]},
+    t14:{id:'t14',title:'Check warehouse capacity for sample storage', description:'', status:'open', priority:'low', dueDate:'2026-07-14', assignee:'C', storyId:'saint-goban', source:'voice', attachments:[], comments:[]},
+    mt1:{id:'mt1',title:'Add Jean-Paul to WhatsApp and share quality cert template', description:'Save Jean-Paul contact on WhatsApp and send him the quality certification template we use for partner onboarding.', status:'done', priority:'medium', dueDate:'2026-06-21', assignee:'R', memoId:'mem1', storyId:'saint-goban', source:'memo', attachments:[], comments:[]},
+    mt2:{id:'mt2',title:'Prepare quality cert docs package for SG review', description:'Compile all required quality certification documents Saint-Gobain needs for APAC procurement compliance.', status:'in_progress', priority:'high', dueDate:'2026-07-10', assignee:'C', memoId:'mem1', storyId:'saint-goban', source:'memo', attachments:[], comments:[]},
+    mt3:{id:'mt3',title:'Confirm 8% margin floor with Finance before next SG call', description:'Get sign-off from Finance that 8% is the hard floor on co-branded items before entering pricing discussion with SG.', status:'done', priority:'urgent', dueDate:'2026-06-26', assignee:'R', memoId:'mem2', storyId:'saint-goban', source:'memo', attachments:[], comments:[]},
+    mt4:{id:'mt4',title:'Brief legal team on exclusivity risk', description:'Loop in legal to understand implications of any exclusivity clause Saint-Gobain might propose for SEA territory.', status:'open', priority:'high', dueDate:'2026-07-08', assignee:'R', memoId:'mem2', storyId:'saint-goban', source:'memo', attachments:[], comments:[]},
+  },
+  memos: {
+    mem1: {id:'mem1', storyId:'saint-goban', title:'Jean-Paul — Contact Notes', date:'2026-06-20', body:'VP Procurement APAC. Prefers WhatsApp for quick comms. Decision maker for APAC but needs Paris sign-off above USD 100K. Very detail-oriented about quality certifications.', taskIds:['mt1','mt2'], aiSummary:'Jean-Paul Mercier is VP Procurement APAC and the primary decision-maker for this deal. Decisions above USD 100K require Paris HQ sign-off. Prefers WhatsApp — keep comms tight and include quality cert docs in every update.'},
+    mem2: {id:'mem2', storyId:'saint-goban', title:'Negotiation Red Lines', date:'2026-06-25', body:'Do NOT agree to Net-60. Minimum: Net-30 + 30% upfront. MOQ floor: 5,000 units. Cannot go below 8% margin on co-branded items. If they push exclusivity — loop in legal first.', taskIds:['mt3','mt4'], aiSummary:'Internal limits are set: Net-30 + 30% upfront is the floor on payment terms (Net-60 is a hard no). MOQ minimum is 5,000 units, margin floor is 8% on co-branded items. Any exclusivity clause must go to legal before committing.'},
+  },
+  voices: {
+    v1: {id:'v1', storyId:'saint-goban', name:'Pre-call thoughts — Jun 23', duration:'1:42', date:'2026-06-23', by:'Rey Putra', transcript:'Thinking through our position before the kick-off. Main points: hold on MOQ minimum 5k, don\'t reveal our margin floor, let them open pricing first.'},
+  },
+  files: [
+    {name:'SaintGobain_NDA_Draft.pdf',   size:'2.1 MB', date:'Jun 23', by:'Rey',    icon:'📄', storyId:'saint-goban'},
+    {name:'Lavani_Cobranding_Proposal_v1.pptx', size:'4.8 MB', date:'Jun 25', by:'Bintang', icon:'📊', storyId:'saint-goban'},
+    {name:'Contract_Net30_Final.docx',   size:'890 KB', date:'Jun 29', by:'Rey',    icon:'📝', storyId:'saint-goban'},
+    {name:'Sample_Photos_3colorways.zip',size:'12.4 MB',date:'Jun 30', by:'Cakra',  icon:'🖼', storyId:'saint-goban'},
+  ]
+};
+
+// ==================== STATE ====================
+const S = {
+  view: 'story',            // 'story' | 'meeting' | 'inbox'
+  projectId: 'lavani',
+  storyId: 'saint-goban',
+  meetingId: null,
+  storyTab: 'timeline',     // 'timeline' | 'files' | 'tasks'
+  contentFilter: 'all',    // 'all' | 'meetings' | 'memos'
+  meetingTab: 'notes',
+  taskFilter: 'all',
+  expandedMeetings: new Set(['m2']),
+  expandedMemos: new Set(['mem1']),
+  expandedProjects: {lavani:true, trial:false, test1:false},
+  expandedStories: {'saint-goban':true},
+  projectOrder: ['lavani','trial','test1'],
+  pinnedProjects: new Set(),
+  myBoardFilter: 'all',        // 'all' | 'assigned' | 'sent'
+  myBoardSourceType: 'all',   // 'all' | 'meeting' | 'memo'
+  myBoardPriority: 'all',     // 'all' | 'urgent' | 'high' | 'medium' | 'low'
+  myBoardSearch: '',
+  aiGenerating: false,
+  _nextId: 100,
+};
+
+function uid(prefix) { return prefix + (++S._nextId); }
+
+// Single canonical date formatter — takes ISO "YYYY-MM-DD", returns "Jul 2"
+const _MO = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function fmtDate(iso) {
+  if (!iso) return '';
+  const parts = String(iso).split('-');
+  if (parts.length < 3) return iso; // already formatted or invalid
+  return _MO[parseInt(parts[1], 10) - 1] + ' ' + parseInt(parts[2], 10);
+}
+
+// ==================== TOAST ====================
+let _toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => el.classList.remove('show'), 2400);
+}
+
+// ==================== NAVIGATE ====================
+function goStory(projectId, storyId) {
+  S.view = 'story'; S.projectId = projectId; S.storyId = storyId;
+  S.storyTab = 'timeline';
+  S.expandedProjects[projectId] = true;
+  S.expandedStories[storyId] = true;
+  render();
+}
+function goMeeting(meetingId) {
+  S.view = 'meeting'; S.meetingId = meetingId;
+  const m = DB.meetings[meetingId];
+  if (m) { S.storyId = m.storyId; const st = DB.stories[m.storyId]; if(st) S.projectId = st.projectId; }
+  render();
+}
+function goMyBoard() { S.view = 'myboard'; render(); }
+function goInbox()   { goMyBoard(); }
+function goProject(projectId) {
+  S.view = 'project'; S.projectId = projectId;
+  S.expandedProjects[projectId] = true;
+  render();
+}
+function goBack() { S.view = 'story'; render(); }
+
+// ==================== ACTIONS ====================
+function toggleProject(id) {
+  S.expandedProjects[id] = !S.expandedProjects[id];
+  renderSidebar();
+}
+function toggleStorySB(id) {
+  S.expandedStories[id] = !S.expandedStories[id];
+  renderSidebar();
+}
+function toggleMeetingCard(id) {
+  if (S.expandedMeetings.has(id)) S.expandedMeetings.delete(id);
+  else S.expandedMeetings.add(id);
+  if (S.view === 'story') renderStoryMain();
+}
+function setStoryTab(tab) {
+  S.storyTab = tab;
+  document.querySelectorAll('#story-topbar .tab').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tab === tab);
+  });
+  renderStoryMain();
+}
+function setContentFilter(f) { S.contentFilter = f; renderStoryMain(); }
+function setTaskFilter(f) { S.taskFilter = f; }
+
+function toggleTask(taskId) {
+  const t = DB.tasks[taskId];
+  if (!t) return;
+  if (t.status === 'done') t.status = 'open';
+  else t.status = 'done';
+  if (S.view === 'meeting') renderMeetingTaskList();
+  if (S.view === 'story' && S.storyTab === 'timeline') renderStoryMain();
+}
+
+function saveNotes(meetingId, val) {
+  if (DB.meetings[meetingId]) DB.meetings[meetingId].notes = val;
+}
+function saveTitle(meetingId, val) {
+  if (DB.meetings[meetingId]) { DB.meetings[meetingId].title = val.trim() || 'Untitled Meeting'; }
+  renderSidebar();
+}
+
+function addMeetingTask(meetingId) {
+  const input = document.getElementById('new-task-input');
+  const val = input ? input.value.trim() : '';
+  if (!val) { toast('Enter a task title'); return; }
+  const id = uid('t');
+  DB.tasks[id] = {id, title:val, status:'open', assignee:'R', meetingId, source:'meeting'};
+  DB.meetings[meetingId].taskIds.push(id);
+  input.value = '';
+  renderMeetingTaskList();
+  toast('Task added');
+}
+
+function deleteMeetingTask(taskId, meetingId) {
+  delete DB.tasks[taskId];
+  const m = DB.meetings[meetingId];
+  if (m) m.taskIds = m.taskIds.filter(x => x !== taskId);
+  renderMeetingTaskList();
+}
+
+function generateAI(meetingId) {
+  const m = DB.meetings[meetingId];
+  if (!m) return;
+  const box = document.getElementById('ai-summary-content');
+  if (box) box.innerHTML = '<div class="ai-summary-text ai-typing">Summarising…</div>';
+  const btn = document.getElementById('gen-ai-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Generating…'; }
+  const summaries = [
+    'Saint-Gobain proposes co-branding deal for SEA division. Key terms: MOQ 5,000 units, budget capped at Paris HQ approval, NDA in progress. Next steps: samples by July, await budget confirmation.',
+    'Budget approved at USD 120K. Three colorways confirmed. Payment terms settled at Net-30 + 30% upfront after negotiation.',
+    'Contract signing and production handover planned. All parties confirmed. Pre-read materials to be sent 48h in advance.'
+  ];
+  const summary = m.notes ? (meetingId === 'm2' ? summaries[1] : summaries[0]) : summaries[2];
+  let i = 0; const words = summary.split(' ');
+  if (box) box.innerHTML = '<div class="ai-summary-text ai-typing" id="ai-typing-text"></div>';
+  const interval = setInterval(() => {
+    const el = document.getElementById('ai-typing-text');
+    if (!el || i >= words.length) {
+      clearInterval(interval);
+      m.aiSummary = summary;
+      if (el) el.classList.remove('ai-typing');
+      if (btn) { btn.disabled = false; btn.innerHTML = '✨ Regenerate'; }
+      return;
+    }
+    el.textContent = words.slice(0,++i).join(' ');
+  }, 55);
+}
+
+function generateMoM(meetingId) {
+  const m = DB.meetings[meetingId];
+  if (!m) return;
+  const view = document.getElementById('mom-view');
+  if (view) view.innerHTML = '<div class="mom-display"><div class="ai-summary-text ai-typing">Structuring minutes…</div></div>';
+  const btn = event.target;
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Generating…'; }
+  const momContent = '<div class="mom-block"><div class="mom-heading">📋 Key Discussion Points</div><ul class="mom-list"><li>Saint-Gobain proposes co-branding Lavani Fabric line for the SEA division</li><li>MOQ: 5,000 units minimum — samples required by end of July</li><li>Budget approval pending Paris HQ sign-off (estimated 2 weeks)</li><li>NDA sent and acknowledged by all parties</li></ul></div><div class="mom-block"><div class="mom-heading">✅ Decisions Made</div><ul class="mom-list"><li>Proceed with sample preparation — 5 colorways</li><li>Hold contract finalization until Paris HQ budget is confirmed</li></ul></div><div class="mom-block"><div class="mom-heading">⚡ Next Steps</div><ul class="mom-list"><li><b>Rey</b> — Prepare sample pack (5 colorways) by July 31</li><li><b>Cakra</b> — Loop in legal on exclusivity clause</li><li><b>Cakra</b> — Confirm quality cert docs for Saint-Gobain</li><li><b>Jean-Paul</b> — Follow up with Paris HQ within 2 weeks</li></ul></div>';
+  setTimeout(() => {
+    m.mom = momContent;
+    if (view) view.innerHTML = `<div class="mom-display">${momContent}</div>`;
+    if (btn) { btn.disabled = false; btn.innerHTML = '✨ Regenerate MoM'; }
+    toast('MoM generated');
+  }, 1800);
+}
+
+function toggleMoMEdit(meetingId) {
+  const view = document.getElementById('mom-view');
+  const ta = document.getElementById('notes-editor');
+  if (!view || !ta) return;
+  const isEditing = ta.style.display !== 'none';
+  if (isEditing) {
+    view.style.display = '';
+    ta.style.display = 'none';
+  } else {
+    view.style.display = 'none';
+    ta.style.display = '';
+    ta.focus();
+  }
+}
+
+// ==================== CONTENT CREATION MODAL ====================
+const ORG_MEMBERS = [
+  {id:'R', name:'Rey Putra',      role:'Product',     color:'#6366f1'},
+  {id:'B', name:'Bintang Aditya', role:'Design',      color:'#10b981'},
+  {id:'C', name:'Cakra Yudha',    role:'Engineering', color:'#f59e0b'},
+  {id:'D', name:'Dani Kurniawan', role:'Marketing',   color:'#a855f7'},
+  {id:'F', name:'Farah Putri',    role:'Finance',     color:'#ef4444'},
+];
+
+const _MS = {
+  storyId:null, type:'meeting', inputMethod:'paste',
+  extractedTasks:[], step:'input', fakeFile:null,
+  attendees:[{id:'R', name:'Rey Putra', registered:true}],
+  notifyMembers:[],
+};
+
+function showNewContentModal(storyId, type) {
+  _MS.storyId = storyId; _MS.type = type || 'meeting';
+  _MS.inputMethod = 'paste'; _MS.extractedTasks = []; _MS.step = 'input'; _MS.fakeFile = null;
+  _MS.attendees = [{id:'R', name:'Rey Putra', registered:true}];
+  _MS.notifyMembers = [];
+  _renderContentModal();
+  setTimeout(() => { const t = document.getElementById('nc-title'); if(t) t.focus(); }, 60);
+}
+// keep old alias so sidebar "+ Meeting" buttons still work
+function showNewMeetingModal(storyId) { showNewContentModal(storyId, 'meeting'); }
+
+function _renderContentModal() {
+  const isMtg = _MS.type === 'meeting';
+  const today = new Date().toISOString().split('T')[0];
+
+  const attendeeChips = _MS.attendees.map((a,i) =>
+    `<span class="at-chip ${a.registered?'registered':''}">${a.name}<button class="at-chip-del" onclick="removeTag('attendees','attendee-tagger','at-input','at-dropdown',${i})">✕</button></span>`
+  ).join('');
+
+  const notifyChips = (_MS.notifyMembers||[]).map((a,i) =>
+    `<span class="at-chip registered">${a.name}<button class="at-chip-del" onclick="removeTag('notifyMembers','notify-tagger','notify-input','notify-dropdown',${i})">✕</button></span>`
+  ).join('');
+
+  const infoFields = isMtg ? `
+    <div class="modal-field" style="margin-bottom:10px">
+      <div class="modal-label">Date</div>
+      <input class="modal-input" type="date" id="nc-date" value="${today}">
+    </div>
+    <div class="modal-field">
+      <div class="modal-label">Attendees</div>
+      <div class="attendee-tagger" id="attendee-tagger" onclick="document.getElementById('at-input').focus()">
+        ${attendeeChips}
+        <input class="at-input" id="at-input"
+          placeholder="${_MS.attendees.length ? 'Add more…' : 'Add attendees…'}"
+          oninput="filterTagSuggestions('attendees','attendee-tagger','at-input','at-dropdown',this.value)"
+          onkeydown="handleTagKey('attendees','attendee-tagger','at-input','at-dropdown',event)"
+          autocomplete="off">
+      </div>
+      <div class="at-dropdown" id="at-dropdown"></div>
+    </div>` : `
+    <div class="modal-field">
+      <div class="modal-label">Notify team members</div>
+      <div style="font-size:11px;color:var(--fg-muted);margin-bottom:5px">They'll be notified when this memo is saved</div>
+      <div class="attendee-tagger" id="notify-tagger" onclick="document.getElementById('notify-input').focus()">
+        ${notifyChips}
+        <input class="at-input" id="notify-input"
+          placeholder="${(_MS.notifyMembers||[]).length ? 'Add more…' : 'Tag team members to notify…'}"
+          oninput="filterTagSuggestions('notifyMembers','notify-tagger','notify-input','notify-dropdown',this.value)"
+          onkeydown="handleTagKey('notifyMembers','notify-tagger','notify-input','notify-dropdown',event)"
+          autocomplete="off">
+      </div>
+      <div class="at-dropdown" id="notify-dropdown"></div>
+    </div>`;
+
+  const methods = [
+    {id:'paste',icon:'📝',label:'Paste notes',sub:'Raw notes, transcript'},
+    {id:'audio',icon:'🎙',label:'Upload audio',sub:'Recording, voice memo'},
+    {id:'file', icon:'📎',label:'Attach file', sub:'Doc, image, PDF, photo'},
+  ];
+  const methodCards = methods.map(m=>`
+    <div class="input-method-card ${_MS.inputMethod===m.id?'selected':''}" onclick="selectInputMethod('${m.id}')">
+      <div class="imc-icon">${m.icon}</div><div class="imc-label">${m.label}</div><div class="imc-sub">${m.sub}</div>
+    </div>`).join('');
+
+  let inputPanel = '';
+  if (_MS.inputMethod === 'paste') {
+    inputPanel = `<div class="content-input-area"><textarea class="content-textarea" id="nc-content" placeholder="Paste meeting notes, Google Meet transcript, or any raw text here…"></textarea></div>`;
+  } else if (_MS.inputMethod === 'audio') {
+    const fileReady = _MS.fakeFile && _MS.inputMethod === 'audio';
+    inputPanel = `<div class="content-input-area"><div class="file-drop-area" onclick="simulateFileSelect('audio')">
+      <div class="file-drop-icon">🎙</div>
+      <div class="file-drop-label" style="${fileReady?'color:var(--success)':''}">${fileReady ? '✅ '+_MS.fakeFile : 'Drop audio file or click to browse'}</div>
+      <div class="file-drop-sub">MP3, M4A, WAV · up to 200MB · In-browser Whisper stays on device</div>
+    </div></div>
+    <button style="width:100%;margin-top:8px;background:rgba(239,68,68,.07);color:var(--danger);border:1px solid rgba(239,68,68,.2);border-radius:var(--radius-sm);padding:8px;font-size:12.5px;cursor:pointer;font-family:inherit" onclick="simulateFileSelect('record')">⏺ Record now</button>`;
+  } else {
+    const fileReady = _MS.fakeFile && _MS.inputMethod === 'file';
+    inputPanel = `<div class="content-input-area"><div class="file-drop-area" onclick="simulateFileSelect('file')">
+      <div class="file-drop-icon">📎</div>
+      <div class="file-drop-label" style="${fileReady?'color:var(--success)':''}">${fileReady ? '✅ '+_MS.fakeFile : 'Drop a file or click to browse'}</div>
+      <div class="file-drop-sub">PDF, DOCX, PPTX, PNG, JPG, HEIC · AI reads and extracts tasks</div>
+    </div></div>`;
+  }
+
+  const tasksSection = _MS.extractedTasks.length ? `
+    <div class="extracted-tasks" style="margin-top:14px">
+      <div class="et-header">✅ ${_MS.extractedTasks.length} task${_MS.extractedTasks.length!==1?'s':''} extracted — review and edit before saving</div>
+      ${_MS.extractedTasks.map((t,i)=>`<div class="et-task-row">
+        <div class="et-check">✓</div>
+        <input class="et-task-txt" value="${t.replace(/"/g,'&quot;')}" oninput="_MS.extractedTasks[${i}]=this.value">
+        <button class="et-del" onclick="removeExtractedTask(${i})">✕</button>
+      </div>`).join('')}
+      <button class="et-add" onclick="addExtractedTask()">＋ Add task</button>
+    </div>` : '';
+
+  const saveLabel = `Save ${isMtg?'Meeting':'Memo'}${_MS.extractedTasks.length ? ' + '+_MS.extractedTasks.length+' task'+(_MS.extractedTasks.length!==1?'s':'') : ''}`;
+
+  document.getElementById('modal').innerHTML = `
+    <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+      <div class="modal-box wide">
+        <div class="modal-tabs">
+          <button class="modal-tab ${_MS.type==='meeting'?'active':''}" onclick="switchContentType('meeting')">🗓 Meeting</button>
+          <button class="modal-tab ${_MS.type==='memo'?'active':''}" onclick="switchContentType('memo')">📝 Memo</button>
+        </div>
+        <div class="modal-field">
+          <div class="modal-label">${isMtg?'Meeting Title':'Memo Title'}</div>
+          <input class="modal-input" id="nc-title" placeholder="${isMtg?'e.g. Follow-up call with Jean-Paul':'e.g. Negotiation red lines'}">
+        </div>
+        ${infoFields}
+        <div class="modal-field" style="margin-bottom:10px">
+          <div class="modal-label">Input method</div>
+          <div class="input-method-row">${methodCards}</div>
+          ${inputPanel}
+        </div>
+        <div class="ai-action-row">
+          <button class="btn-ai" id="btn-ai-process" onclick="processContentWithAI()">🤖 Process with AI</button>
+          <button class="btn-quick" onclick="quickExtract()">⚡ Quick Extract</button>
+          <button class="btn-ghost" style="margin-left:auto" onclick="saveNewContent()">Save only</button>
+        </div>
+        <div class="ai-hint" id="ai-hint-area"><b>Process with AI</b> calls Claude &nbsp;·&nbsp; <b>Quick Extract</b> uses local heuristics</div>
+        ${tasksSection}
+        <div class="modal-footer">
+          <button class="btn-ghost" onclick="closeModal()">Cancel</button>
+          <button class="btn-primary" onclick="saveNewContent()">${saveLabel}</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function switchContentType(type) {
+  _MS.type = type; _MS.extractedTasks = []; _MS.step = 'input'; _MS.fakeFile = null;
+  _renderContentModal();
+  setTimeout(()=>{ const t=document.getElementById('nc-title'); if(t) t.focus(); },30);
+}
+function selectInputMethod(method) { _MS.inputMethod = method; _MS.fakeFile = null; _renderContentModal(); }
+function simulateFileSelect(kind) {
+  const names = {audio:'meeting-recording-jun29.m4a', record:'voice-memo-'+new Date().toISOString().slice(0,10)+'.m4a', file:'SaintGobain_Contract_Draft.pdf'};
+  _MS.fakeFile = names[kind] || 'file.pdf';
+  if (kind==='record') _MS.inputMethod='audio';
+  _renderContentModal();
+  toast('📎 ' + _MS.fakeFile + ' ready — click Process with AI');
+}
+
+function processContentWithAI() {
+  const btn = document.getElementById('btn-ai-process');
+  if (btn) { btn.disabled=true; btn.innerHTML='<span class="ai-spinner" style="width:13px;height:13px;border:2px solid rgba(255,255,255,.3);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite;display:inline-block;vertical-align:middle;margin-right:6px"></span>Processing…'; }
+
+  const taskPools = {
+    paste:['Prepare sample pack with 5 colorways for review','Draft co-branding proposal PDF for Saint-Gobain','Confirm MOQ of 5,000 units with production team','Send revised contract with Net-30 + 30% deposit terms','Follow up with Jean-Paul on Paris HQ budget approval','Issue proforma invoice for USD 36,000'],
+    audio:['Transcribe and send meeting summary to all attendees','Book follow-up call within 2 weeks','Prepare talking points for HQ sign-off call','Update CRM with Saint-Gobain contact details'],
+    file: ['Review contract clauses flagged in section 4.2','Request legal review of exclusivity clause','Get finance sign-off on updated payment terms','Archive signed NDA in shared drive','Update delivery schedule in production tracker'],
+    memo: ['Brief legal team on exclusivity risk','Verify quality certification docs are current','Schedule quarterly review with Saint-Gobain','Update CRM contact notes for Jean-Paul'],
+  };
+  const content = (document.getElementById('nc-content')||{}).value || '';
+  let tasks = [];
+  if (_MS.inputMethod==='paste' && content.length>30) {
+    const rx=/\b(send|prepare|confirm|draft|follow|update|schedule|review|contact|book|get|issue|check|create|notify|discuss|request|share|complete|arrange)\b/i;
+    tasks = content.split(/[.\n]/).map(l=>l.trim()).filter(l=>l.length>10&&rx.test(l)).slice(0,5).map(l=>l.charAt(0).toUpperCase()+l.slice(1));
+  }
+  if (!tasks.length) {
+    const pool = _MS.type==='memo' ? [...taskPools.memo,...taskPools[_MS.inputMethod]] : (taskPools[_MS.inputMethod]||taskPools.paste);
+    tasks = pool.slice(0, 3+Math.floor(Math.random()*2));
+  }
+  const msgs = _MS.inputMethod==='audio' ? ['Transcribing audio…','Identifying action items…','Structuring tasks…'] :
+               _MS.inputMethod==='file'  ? ['Reading document…','Extracting content…','Identifying action items…'] :
+                                           ['Analysing content…','Extracting action items…','Formatting tasks…'];
+  let step=0;
+  const hint = document.getElementById('ai-hint-area');
+  if (hint) hint.innerHTML=`<div class="ai-processing"><span class="ai-spinner"></span><span id="ai-status-msg">${msgs[0]}</span></div>`;
+  const iv = setInterval(()=>{
+    step++;
+    const el=document.getElementById('ai-status-msg');
+    if(el&&step<msgs.length) el.textContent=msgs[step];
+    if(step>=msgs.length){ clearInterval(iv); _MS.extractedTasks=tasks; _MS.step='review'; _renderContentModal(); }
+  },900);
+}
+
+function quickExtract() {
+  const content=(document.getElementById('nc-content')||{}).value||'';
+  if(!content.trim()){toast('Paste some notes first for Quick Extract');return;}
+  const rx=/\b(send|prepare|confirm|draft|follow|update|schedule|review|contact|book|get|issue|check|create|notify|discuss|request|share|complete|arrange)\b/i;
+  const tasks=content.split(/[.\n]/).map(l=>l.trim()).filter(l=>l.length>8&&rx.test(l)).slice(0,6).map(l=>l.charAt(0).toUpperCase()+l.slice(1));
+  if(!tasks.length){toast('No clear action items found — try Process with AI');return;}
+  _MS.extractedTasks=tasks; _MS.step='review'; _renderContentModal();
+  toast(`⚡ ${tasks.length} tasks extracted`);
+}
+
+function removeExtractedTask(idx){ _MS.extractedTasks.splice(idx,1); if(!_MS.extractedTasks.length) _MS.step='input'; _renderContentModal(); }
+function addExtractedTask(){ _MS.extractedTasks.push(''); _renderContentModal(); const ins=document.querySelectorAll('.et-task-txt'); if(ins.length) ins[ins.length-1].focus(); }
+
+// ==================== GENERIC TAGGER ====================
+function filterTagSuggestions(field, taggerId, inputId, dropdownId, val) {
+  const dd = document.getElementById(dropdownId); if (!dd) return;
+  const items = _MS[field] || [];
+  const added = new Set(items.map(a => a.name.toLowerCase()));
+  const isNotify = field === 'notifyMembers';
+  const matches = ORG_MEMBERS.filter(m =>
+    !added.has(m.name.toLowerCase()) &&
+    (!val || m.name.toLowerCase().includes(val.toLowerCase()))
+  );
+  if (!val && !matches.length) { dd.classList.remove('show'); return; }
+  const memberRows = matches.map(m =>
+    `<div class="at-option" onclick="addTag('${field}','${taggerId}','${inputId}','${dropdownId}','${m.name}','${m.id}',true)">
+      <div class="at-av" style="background:${m.color}22;color:${m.color}">${m.id}</div>
+      <div>
+        <div style="font-size:12.5px;font-weight:500">${m.name}</div>
+        <div style="font-size:10.5px;color:var(--fg-muted)">${m.role} · Registered</div>
+      </div>
+    </div>`
+  ).join('');
+  const alreadyInOrg = ORG_MEMBERS.some(m => m.name.toLowerCase() === (val||'').toLowerCase());
+  const extRow = !isNotify && val && !alreadyInOrg && !added.has(val.toLowerCase())
+    ? `<div class="at-option at-option-ext" onclick="addTag('${field}','${taggerId}','${inputId}','${dropdownId}','${val}','',false)">＋ Add "<b>${val}</b>" as external attendee</div>` : '';
+  dd.innerHTML = memberRows + extRow;
+  dd.classList.toggle('show', !!(memberRows || extRow));
+}
+
+function handleTagKey(field, taggerId, inputId, dropdownId, e) {
+  if (e.key === 'Enter' || e.key === ',') {
+    e.preventDefault();
+    const val = e.target.value.trim().replace(/,$/, '');
+    if (val) addTag(field, taggerId, inputId, dropdownId, val, '', false);
+    else { const dd=document.getElementById(dropdownId); if(dd) dd.classList.remove('show'); }
+  } else if (e.key === 'Backspace' && !e.target.value && (_MS[field]||[]).length) {
+    removeTag(field, taggerId, inputId, dropdownId, (_MS[field]).length - 1);
+  } else if (e.key === 'Escape') {
+    const dd=document.getElementById(dropdownId); if(dd) dd.classList.remove('show');
+  }
+}
+
+function addTag(field, taggerId, inputId, dropdownId, name, id, registered) {
+  name = name.trim(); if (!name) return;
+  if (!_MS[field]) _MS[field] = [];
+  if (_MS[field].find(a => a.name.toLowerCase() === name.toLowerCase())) {
+    toast(`${name} is already added`); return;
+  }
+  _MS[field].push({ name, id: id||'', registered: !!registered });
+  _refreshTaggerEl(field, taggerId, inputId, dropdownId);
+}
+
+function removeTag(field, taggerId, inputId, dropdownId, idx) {
+  if (_MS[field]) _MS[field].splice(idx, 1);
+  _refreshTaggerEl(field, taggerId, inputId, dropdownId);
+  filterTagSuggestions(field, taggerId, inputId, dropdownId, '');
+}
+
+function _refreshTaggerEl(field, taggerId, inputId, dropdownId) {
+  const tagger = document.getElementById(taggerId); if (!tagger) return;
+  const items = _MS[field] || [];
+  const isNotify = field === 'notifyMembers';
+  const chips = items.map((a,i) =>
+    `<span class="at-chip ${a.registered?'registered':''}">${a.name}<button class="at-chip-del" onclick="removeTag('${field}','${taggerId}','${inputId}','${dropdownId}',${i})">✕</button></span>`
+  ).join('');
+  const placeholder = items.length ? 'Add more…' : (isNotify ? 'Tag team members to notify…' : 'Add attendees…');
+  tagger.innerHTML = chips + `<input class="at-input" id="${inputId}"
+    placeholder="${placeholder}"
+    oninput="filterTagSuggestions('${field}','${taggerId}','${inputId}','${dropdownId}',this.value)"
+    onkeydown="handleTagKey('${field}','${taggerId}','${inputId}','${dropdownId}',event)"
+    autocomplete="off">`;
+  const inp = document.getElementById(inputId); if (inp) inp.focus();
+  const dd = document.getElementById(dropdownId); if (dd) { dd.innerHTML=''; dd.classList.remove('show'); }
+}
+
+function saveNewContent() {
+  const title=((document.getElementById('nc-title')||{}).value||'').trim() || (_MS.type==='meeting'?'Untitled Meeting':'Untitled Memo');
+  const today=new Date().toISOString().split('T')[0];
+  const tasks=_MS.extractedTasks.filter(t=>t.trim());
+  const storyId=_MS.storyId;
+  if(_MS.type==='meeting'){
+    const date=((document.getElementById('nc-date')||{}).value)||today;
+    const att=_MS.attendees.length ? _MS.attendees.map(a=>a.name) : ['Rey Putra'];
+    const notes=((document.getElementById('nc-content')||{}).value)||'';
+    const id=uid('m');
+    const taskIds=tasks.map(t=>{const tid=uid('t');DB.tasks[tid]={id:tid,title:t,status:'open',assignee:'R',meetingId:id,source:'meeting'};return tid;});
+    DB.meetings[id]={id,storyId,title,date,attendees:att,notes,mom:'',taskIds,aiSummary:''};
+    closeModal();
+    toast(`Meeting "${title}" created${tasks.length?' + '+tasks.length+' tasks':''}`)
+    S.storyId=storyId; S.storyTab='timeline'; S.expandedMeetings.add(id);
+    renderSidebar(); goMeeting(id);
+  } else {
+    const body=((document.getElementById('nc-content')||{}).value)||'';
+    const id=uid('mem');
+    const notified = (_MS.notifyMembers||[]).map(a=>a.name);
+    DB.memos[id]={id,storyId,title,date:today,body,notifyMembers:notified,taskIds:[],aiSummary:''};
+    tasks.forEach(t=>{const tid=uid('t');DB.tasks[tid]={id:tid,title:t,status:'open',assignee:'R',storyId,source:'memo'};});
+    closeModal();
+    const notifyStr = notified.length ? ` · ${notified.length} notified` : '';
+    toast(`Memo "${title}" saved${tasks.length?' + '+tasks.length+' tasks':''}${notifyStr}`)
+    S.storyId=storyId; S.storyTab='timeline';
+    if(S.view==='story'&&S.storyId===storyId) renderStoryMain(); else goStory(S.projectId,storyId);
+    renderSidebar();
+  }
+}
+
+function createMeeting(storyId) { saveNewContent(); } // legacy alias
+
+function addAttendee(meetingId) {
+  const input = document.getElementById('attendee-input');
+  const val = input ? input.value.trim() : '';
+  if (!val) { toast('Enter a name'); return; }
+  DB.meetings[meetingId].attendees.push(val);
+  input.value = '';
+  renderAttendees(meetingId);
+  toast(`${val} added`);
+}
+
+function removeAttendee(meetingId, idx) {
+  DB.meetings[meetingId].attendees.splice(idx,1);
+  renderAttendees(meetingId);
+}
+
+function showNewMemoModal(storyId) { showNewContentModal(storyId, 'memo'); }
+function createMemo(storyId) { saveNewContent(); } // legacy alias
+
+function closeModal() { document.getElementById('modal').innerHTML = ''; }
+
+// ==================== SIDEBAR ====================
+let _dragProjId = null;
+function projDragStart(e, pid) { _dragProjId = pid; setTimeout(()=>e.currentTarget.style.opacity='.35',0); }
+function projDragEnd(e) { e.currentTarget.style.opacity=''; document.querySelectorAll('.proj-drag-target').forEach(el=>el.classList.remove('proj-drag-target')); _dragProjId=null; }
+function projDragOver(e, pid) { if(!_dragProjId||_dragProjId===pid)return; e.preventDefault(); document.querySelectorAll('.proj-drag-target').forEach(el=>el.classList.remove('proj-drag-target')); e.currentTarget.classList.add('proj-drag-target'); }
+function projDrop(e, pid) { e.preventDefault(); e.currentTarget.classList.remove('proj-drag-target'); if(!_dragProjId||_dragProjId===pid)return; const ord=S.projectOrder; const fi=ord.indexOf(_dragProjId); const ti=ord.indexOf(pid); if(fi<0||ti<0)return; ord.splice(fi,1); ord.splice(ti,0,_dragProjId); _dragProjId=null; renderSidebar(); }
+function toggleProjectPin(pid) { S.pinnedProjects.has(pid)?S.pinnedProjects.delete(pid):S.pinnedProjects.add(pid); renderSidebar(); }
+
+function renderSidebar() {
+  const el = document.getElementById('sidebar');
+  const storyMeetings = (stId) => Object.values(DB.meetings).filter(m => m.storyId === stId);
+  const storyRow = (st) => {
+    const active = S.storyId === st.id ? 'active' : '';
+    const expanded = S.expandedStories[st.id];
+    const meetings = storyMeetings(st.id);
+    const chevron = meetings.length ? `<span class="story-chev ${expanded?'open':''}">▶</span>` : '';
+    let mtgRows = '';
+    if (expanded && meetings.length) {
+      mtgRows = meetings.map(m => {
+        const a = S.meetingId === m.id && S.view === 'meeting' ? 'active' : '';
+        const ds = fmtDate(m.date);
+        return `<div class="mtg-sb-row ${a}" onclick="goMeeting('${m.id}')">
+          <span class="mtg-sb-dot ${a}"></span>
+          <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.title}</span>
+          <span style="opacity:.5;font-size:10px;flex-shrink:0">${ds}</span>
+        </div>`;
+      }).join('');
+      mtgRows += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:3px">
+        <button class="sb-add-btn" style="color:var(--accent)" onclick="showNewMeetingModal('${st.id}')"><span style="opacity:.6">＋</span> Meeting</button>
+        <button class="sb-add-btn" style="color:var(--success)" onclick="showNewMemoModal('${st.id}')"><span style="opacity:.6">＋</span> Memo</button>
+      </div>`;
+    }
+    return `<div class="story-row ${active}" onclick="goStory('${st.projectId}','${st.id}')">
+      <span style="font-size:11px">📋</span>
+      <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${st.name}</span>
+      ${chevron}
+    </div>
+    ${expanded ? `<div style="padding:1px 0 2px 16px">${mtgRows}</div>` : ''}`;
+  };
+
+  const projBlock = (p) => {
+    const exp = S.expandedProjects[p.id];
+    const isActiveProjView = S.view === 'project' && S.projectId === p.id;
+    const isPinned = S.pinnedProjects.has(p.id);
+    const stories = Object.values(DB.stories).filter(s => s.projectId === p.id);
+    const children = exp ? `<div class="proj-children">${stories.map(storyRow).join('')}
+      <button class="sb-add-btn" onclick="showNewStoryModal('${p.id}')"><span style="opacity:.5">＋</span> story</button>
+    </div>` : '';
+    return `<div draggable="true"
+      ondragstart="projDragStart(event,'${p.id}')"
+      ondragend="projDragEnd(event)"
+      ondragover="projDragOver(event,'${p.id}')"
+      ondrop="projDrop(event,'${p.id}')">
+      <div class="proj-row ${isActiveProjView?'active-proj':''}" style="${isActiveProjView?'background:var(--bg-sidebar-active);border-radius:4px;margin:0 6px;padding:5px 7px':''}">
+        <div class="proj-dot" style="background:${p.color};cursor:pointer" onclick="goProject('${p.id}')"></div>
+        <span class="proj-name" style="cursor:pointer" onclick="goProject('${p.id}')">${isPinned?'📌 ':''}${p.name}</span>
+        <button class="proj-pin ${isPinned?'pinned':''}" onclick="event.stopPropagation();toggleProjectPin('${p.id}')" title="${isPinned?'Unpin':'Pin to top'}">📌</button>
+        <span class="proj-chev ${exp?'open':''}" onclick="event.stopPropagation();toggleProject('${p.id}')" style="padding:3px 5px">▶</span>
+      </div>
+      ${children}
+    </div>`;
+  };
+
+  el.innerHTML = `
+    <div class="sb-head">
+      <div class="sb-logo"><div class="sb-logo-icon">⚡</div>MeetingFlow</div>
+      <div class="sb-org">Reynerd's Workspace</div>
+    </div>
+    <div class="sb-quick">
+      <button class="sb-btn" style="width:100%;justify-content:center" onclick="toast('📁 New project — coming soon')">＋ Project</button>
+    </div>
+    <div class="sb-search">
+      <span class="sb-search-ico">🔍</span>
+      <input type="text" placeholder="Search…" oninput="toast('🔍 Search — coming soon')">
+    </div>
+    <div class="sb-scroll">
+      <div class="sb-section">Views</div>
+      <div class="sb-nav ${S.view==='myboard'?'active':''}" onclick="goMyBoard()">📋 <span style="flex:1">My Board</span><span class="sb-badge" title="Open tasks assigned to you">${Object.values(DB.tasks).filter(t=>t.assignee==='R'&&t.status!=='done').length} mine</span></div>
+      <div class="sb-section" style="margin-top:5px">Projects</div>
+      ${[...S.projectOrder.filter(id=>S.pinnedProjects.has(id)),...S.projectOrder.filter(id=>!S.pinnedProjects.has(id))].map(id=>DB.projects[id]).filter(Boolean).map(projBlock).join('')}
+    </div>
+    <div class="sb-footer">
+      <div class="sb-avatar">R</div>
+      <div class="sb-user">Reynerd Putra</div>
+      <button class="sb-ico" onclick="toast('🌓 Theme toggle coming soon')">🌓</button>
+      <button class="sb-ico" onclick="toast('⚙ Settings')">⚙</button>
+    </div>`;
+}
+
+// ==================== STORY VIEW ====================
+function renderStory() {
+  const story = DB.stories[S.storyId];
+  if (!story) { document.getElementById('main').innerHTML = '<div style="padding:40px;color:var(--fg-muted)">Story not found</div>'; return; }
+  const proj = DB.projects[story.projectId];
+  const statusMap = {
+    open:        {label:'Open',        color:'var(--accent)',   bg:'var(--accent-soft)'},
+    in_progress: {label:'In Progress', color:'#b45309',         bg:'var(--warn-soft)'},
+    overdue:     {label:'Overdue',     color:'var(--danger)',   bg:'var(--danger-soft)'},
+    done:        {label:'Completed',   color:'var(--success)',  bg:'var(--success-soft)'},
+  };
+  const _storyTasks = getStoryTasks(S.storyId);
+  const _today = new Date().toISOString().split('T')[0];
+  const _derivedStatus = (() => {
+    if (!_storyTasks.length) return 'open';
+    if (_storyTasks.every(t => t.status === 'done')) return 'done';
+    if (story.dueDate && story.dueDate < _today) return 'overdue';
+    return 'in_progress';
+  })();
+  const st = statusMap[_derivedStatus];
+  const meetings = Object.values(DB.meetings).filter(m => m.storyId === S.storyId);
+  const allTasks = getStoryTasks(S.storyId);
+  const voiceCount = Object.values(DB.voices).filter(v=>v.storyId===S.storyId).length;
+  const memoCount = Object.values(DB.memos).filter(m=>m.storyId===S.storyId).length;
+  const tabCount = {
+    timeline: meetings.length + memoCount,
+    files: DB.files.filter(f=>f.storyId===S.storyId).length + voiceCount,
+    tasks: allTasks.length,
+  };
+  const isTasksTab = S.storyTab === 'tasks';
+  const hasSummary = !!story.aiSummary;
+  const isCollapsed = story.summaryCollapsed;
+
+  document.getElementById('main').innerHTML = `
+    <div class="story-wrap">
+      <div class="topbar" id="story-topbar">
+        <div class="breadcrumb">
+          <span class="crumb" onclick="goProject('${proj?.id||S.projectId}')">
+            <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${proj?.color||'#6366f1'};margin-right:3px;vertical-align:middle"></span>
+            ${proj?.name||'Project'}
+          </span>
+          <span class="crumb-sep">/</span>
+          <span class="badge" style="background:rgba(79,70,229,.08);color:var(--accent)">📋 Story</span>
+        </div>
+        <div class="story-title-row">
+          <div class="story-title">${story.name}</div>
+          <span class="status-pill" style="background:${st.bg};color:${st.color}">${st.label}</span>
+        </div>
+        <div class="story-meta">
+          ${story.dueDate ? `<span class="meta-chip">📅 Due ${story.dueDate}</span>` : ''}
+        </div>
+        <div class="tabs">
+          <button class="tab ${S.storyTab==='timeline'?'active':''}" data-tab="timeline" onclick="setStoryTab('timeline')">🗓 Activity <span class="tab-badge">${tabCount.timeline}</span></button>
+          <button class="tab ${S.storyTab==='files'?'active':''}" data-tab="files" onclick="setStoryTab('files')">📎 Files <span class="tab-badge">${tabCount.files}</span></button>
+          <button class="tab ${S.storyTab==='tasks'?'active':''}" data-tab="tasks" onclick="setStoryTab('tasks')">✅ Tasks <span class="tab-badge">${tabCount.tasks}</span></button>
+        </div>
+      </div>
+      <div style="flex:1;overflow:${isTasksTab?'hidden':'auto'};display:flex;flex-direction:column">
+        <div id="story-tab-body" class="tab-body" style="flex:1;overflow:${isTasksTab?'hidden':'visible'};padding:${isTasksTab?'0 20px 16px':'0 20px 40px'};display:${isTasksTab?'flex':'block'};flex-direction:column"></div>
+      </div>
+    </div>`;
+  renderStoryMain();
+}
+
+function renderStoryMain() {
+  const el = document.getElementById('story-tab-body');
+  if (!el) return;
+  if (S.storyTab === 'timeline') el.innerHTML = renderTimelineTab();
+  else if (S.storyTab === 'files' || S.storyTab === 'voice') el.innerHTML = renderFilesTab();
+  else if (S.storyTab === 'tasks') el.innerHTML = renderTasksKanban();
+}
+
+function renderStoryAISummaryHTML(storyId) {
+  const story = DB.stories[storyId];
+  if (!story) return '';
+  const collapsed = story.summaryCollapsed;
+  if (!story.aiSummary) {
+    return `<div class="story-ai-summary collapsed">
+      <div class="sas-header" onclick="generateStoryAISummary('${storyId}')">
+        <span class="sas-icon">✨</span>
+        <span class="sas-label">AI Story Summary</span>
+        <div class="sas-actions">
+          <button class="sas-gen-btn" onclick="event.stopPropagation();generateStoryAISummary('${storyId}')">✨ Generate Summary</button>
+        </div>
+      </div>
+    </div>`;
+  }
+  return `<div class="story-ai-summary ${collapsed?'collapsed':''}">
+    <div class="sas-header" onclick="toggleStorySummary('${storyId}')">
+      <span class="sas-icon">✨</span>
+      <span class="sas-label">AI Story Summary</span>
+      <div class="sas-actions">
+        <button class="sas-gen-btn" onclick="event.stopPropagation();generateStoryAISummary('${storyId}')">↺ Regenerate</button>
+        <span class="sas-toggle">${collapsed ? '▾ Show' : '▴ Hide'}</span>
+      </div>
+    </div>
+    ${collapsed ? '' : `<div class="sas-body">${story.aiSummary}</div>`}
+  </div>`;
+}
+
+function toggleStorySummary(storyId) {
+  const story = DB.stories[storyId];
+  if (!story) return;
+  story.summaryCollapsed = !story.summaryCollapsed;
+  const wrap = document.getElementById('story-ai-summary-wrap');
+  if (wrap) wrap.innerHTML = renderStoryAISummaryHTML(storyId);
+}
+
+function generateStoryAISummary(storyId) {
+  const story = DB.stories[storyId];
+  if (!story) return;
+  const wrap = document.getElementById('story-ai-summary-wrap');
+  if (wrap) wrap.innerHTML = `<div class="story-ai-summary" style="margin:0 20px 14px">
+    <div class="sas-header">
+      <span class="sas-icon">✨</span>
+      <span class="sas-label">AI Story Summary</span>
+    </div>
+    <div class="sas-body" style="margin-top:10px">
+      <span class="sas-generating">✨ Analyzing meetings and memos…</span>
+    </div>
+  </div>`;
+  const meetings = Object.values(DB.meetings).filter(m => m.storyId === storyId);
+  const memos = Object.values(DB.memos).filter(m => m.storyId === storyId);
+  const tasks = getStoryTasks(storyId);
+  const done = tasks.filter(t => t.status === 'done').length;
+  setTimeout(() => {
+    const summaries = [
+      ...meetings.filter(m => m.aiSummary).map(m => m.aiSummary),
+      ...memos.filter(m => m.body).map(m => m.title + ': ' + m.body.substring(0, 120)),
+    ];
+    const latestMtg = meetings.length ? meetings[meetings.length - 1] : null;
+    const firstMtgSum = meetings.find(m => m.aiSummary)?.aiSummary || '';
+    const firstMemSum = memos.find(m => m.aiSummary)?.aiSummary || '';
+    const openTasks = tasks.filter(t => t.status !== 'done');
+    const overdueTasks = openTasks.filter(t => t.dueDate && t.dueDate < new Date().toISOString().split('T')[0]);
+    const leadSentence = firstMtgSum || firstMemSum || (meetings.length ? `${meetings.length} meeting${meetings.length!==1?'s':''} on record for this story.` : 'No meetings or memos yet.');
+    story.aiSummary = `<p><span style="font-size:10px;background:var(--warn-soft);color:#92400e;padding:1px 6px;border-radius:3px;font-weight:600">⚠ Demo — wire real AI to generate live summaries</span></p><p>${leadSentence.substring(0, 220)}${leadSentence.length > 220 ? '…' : ''}</p><p><strong>At a glance:</strong> ${meetings.length} meeting${meetings.length!==1?'s':''} · ${memos.length} memo${memos.length!==1?'s':''} · ${tasks.length} task${tasks.length!==1?'s':''} (${done} done, ${openTasks.length} open${overdueTasks.length ? ', <span style="color:var(--danger)">' + overdueTasks.length + ' overdue</span>' : ''})${latestMtg ? ' · Latest: ' + latestMtg.title : ''}</p>`;
+    story.summaryCollapsed = false;
+    if (wrap) wrap.innerHTML = renderStoryAISummaryHTML(storyId);
+    toast('✨ Story summary generated');
+  }, 1600);
+}
+
+function renderTimelineTab() {
+  const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const cf = S.contentFilter;
+
+  const allMeetings = Object.values(DB.meetings).filter(m => m.storyId === S.storyId);
+  const allMemos    = Object.values(DB.memos).filter(m => m.storyId === S.storyId);
+
+  const items = [
+    ...(cf !== 'memos'    ? allMeetings.map(m => ({...m, _type:'meeting'})) : []),
+    ...(cf !== 'meetings' ? allMemos.map(m    => ({...m, _type:'memo'}))    : []),
+  ].sort((a,b) => (a.date||'').localeCompare(b.date||''));
+
+  const cards = items.map(item => item._type === 'meeting'
+    ? renderMeetingCard(item)
+    : renderMemoCard(item)
+  ).join('');
+
+  const filterBar = `<div style="display:flex;gap:5px;margin-bottom:14px">
+    <button class="fchip ${cf==='all'?'active':''}" onclick="setContentFilter('all')">All <span style="opacity:.6">${allMeetings.length + allMemos.length}</span></button>
+    <button class="fchip ${cf==='meetings'?'active':''}" onclick="setContentFilter('meetings')">🗓 Meetings <span style="opacity:.6">${allMeetings.length}</span></button>
+    <button class="fchip ${cf==='memos'?'active':''}" onclick="setContentFilter('memos')">📝 Memos <span style="opacity:.6">${allMemos.length}</span></button>
+  </div>`;
+
+  const addRow = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+    <button class="add-mtg-btn" style="margin-bottom:0" onclick="showNewContentModal('${S.storyId}','meeting')">🗓 &nbsp;New Meeting</button>
+    <button class="add-mtg-btn" style="margin-bottom:0;background:rgba(16,185,129,.06);border-color:rgba(16,185,129,.3);color:#065f46" onclick="showNewContentModal('${S.storyId}','memo')">📝 &nbsp;New Memo</button>
+  </div>`;
+
+  const summaryWrap = `<div id="story-ai-summary-wrap" style="margin-bottom:14px">${renderStoryAISummaryHTML(S.storyId)}</div>`;
+  return summaryWrap + addRow + filterBar + (cards || '<div style="padding:30px;text-align:center;color:var(--fg-faint);font-size:13px">No activity yet</div>');
+}
+
+function renderMemoCard(m) {
+  const isOpen = S.expandedMemos.has(m.id);
+  const tasks = (m.taskIds||[]).map(id => DB.tasks[id]).filter(Boolean);
+  const doneTasks = tasks.filter(t => t.status === 'done');
+  const [y,mo,d] = (m.date||'2026-01-01').split('-');
+  const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const month = monthNames[parseInt(mo)-1];
+
+  const pillColor = tasks.length
+    ? `background:var(--success-soft);color:var(--success)`
+    : `background:var(--bg);color:var(--fg-faint);border:1px solid var(--border)`;
+  const pillText = tasks.length ? `✅ ${tasks.length} tasks` : `0 tasks`;
+
+  let bodyHtml = '';
+  if (isOpen) {
+    const _today = new Date().toISOString().split('T')[0];
+    const colStyle = {
+      open:'background:var(--accent-soft);color:var(--accent)',
+      in_progress:'background:var(--warn-soft);color:#b45309',
+      review:'background:rgba(124,58,237,.1);color:#7c3aed',
+      done:'background:var(--success-soft);color:var(--success)',
+    };
+    const colLabel = {open:'Open',in_progress:'In Progress',review:'Review',done:'Done'};
+    const taskRows = tasks.map(t => {
+      const isOverdue = t.dueDate && t.dueDate < _today && t.status !== 'done';
+      const prio = PRIO[t.priority];
+      return `<div class="action-item" onclick="showTaskModal('${t.id}')">
+        <div class="ai-title">${t.title}</div>
+        ${prio ? `<span class="kcard-prio ${prio.cls}" style="font-size:10px;flex-shrink:0">${prio.label}</span>` : ''}
+        ${t.dueDate ? `<span class="ai-due ${isOverdue?'overdue':''}" style="flex-shrink:0">${isOverdue?'⚠ ':''}${t.dueDate.slice(5).replace('-','/')}</span>` : ''}
+        <span style="padding:1px 7px;border-radius:6px;font-size:10px;font-weight:600;flex-shrink:0;${colStyle[t.status]||colStyle.open}">${colLabel[t.status]||t.status}</span>
+      </div>`;
+    }).join('');
+
+    bodyHtml = `<div class="mtg-body open">
+      <div class="body-grid">
+        ${m.aiSummary ? `<div>
+          <div class="body-label">AI Summary</div>
+          <div class="ai-summary-box" style="background:var(--accent-soft);border:1px solid rgba(79,70,229,.15);border-radius:var(--radius-sm);padding:10px 12px;font-size:12.5px;color:var(--fg);line-height:1.65">${m.aiSummary}</div>
+        </div>` : `<div>
+          <button class="btn-ghost" style="font-size:12px" onclick="generateMemoAI('${m.id}')">✨ Generate AI Summary + Tasks</button>
+        </div>`}
+        <div>
+          <div class="body-label">Notes</div>
+          <div class="notes-box">${(m.body||'').replace(/\n/g,'<br>')}</div>
+        </div>
+        ${tasks.length ? `<div>
+          <div class="body-label">Action Items (${doneTasks.length}/${tasks.length} done)</div>
+          <div>${taskRows}</div>
+        </div>` : ''}
+      </div>
+    </div>`;
+  } else {
+    bodyHtml = `<div class="mtg-body"></div>`;
+  }
+
+  return `<div class="mtg-card" style="margin-bottom:10px">
+    <div class="mtg-card-head" onclick="toggleMemoCard('${m.id}')">
+      <div class="mtg-date-block"><div class="mtg-month">${month}</div><div class="mtg-day">${d}</div></div>
+      <div class="mtg-info">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#059669;background:var(--success-soft);padding:1px 6px;border-radius:5px;flex-shrink:0">Memo</span>
+          <div class="mtg-title">${m.title}</div>
+        </div>
+        <div class="mtg-meta">
+          ${m.aiSummary ? '<span style="color:var(--accent)">🤖 AI summary</span>' : ''}
+          ${m.body ? `<span style="color:var(--fg-faint);font-size:11px">${m.body.slice(0,60)}…</span>` : ''}
+        </div>
+      </div>
+      <div class="mtg-right">
+        <span class="tasks-pill" style="${pillColor}">${pillText}</span>
+        <button class="expand-ico ${isOpen?'open':''}" onclick="event.stopPropagation();toggleMemoCard('${m.id}')">▲</button>
+      </div>
+    </div>
+    ${bodyHtml}
+  </div>`;
+}
+
+function toggleMemoCard(memoId) {
+  if (S.expandedMemos.has(memoId)) S.expandedMemos.delete(memoId);
+  else S.expandedMemos.add(memoId);
+  renderStoryMain();
+}
+
+function generateMemoAI(memoId) {
+  const m = DB.memos[memoId];
+  if (!m) return;
+  S.expandedMemos.add(memoId);
+  renderStoryMain();
+  setTimeout(() => {
+    if (!m.aiSummary) {
+      m.aiSummary = m.body ? m.body.split('.').slice(0,2).join('.') + '.' : 'Key insights extracted from this memo.';
+    }
+    if (!m.taskIds || !m.taskIds.length) {
+      const id1 = uid('t'), id2 = uid('t');
+      DB.tasks[id1] = {id:id1,title:'Follow up on: ' + m.title,status:'open',priority:'medium',dueDate:'',assignee:'R',memoId,storyId:m.storyId,source:'memo',attachments:[],comments:[]};
+      m.taskIds = [id1];
+    }
+    renderStoryMain();
+    toast('✨ AI summary and tasks generated');
+  }, 1400);
+}
+
+function renderMeetingCard(m) {
+    const [y,mo,d] = m.date.split('-');
+    const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const month = monthNames[parseInt(mo)-1];
+    const isOpen = S.expandedMeetings.has(m.id);
+    const tasks = m.taskIds.map(id => DB.tasks[id]).filter(Boolean);
+    const doneTasks = tasks.filter(t => t.status === 'done');
+    const isUpcoming = new Date(m.date) > new Date();
+
+    let bodyHtml = '';
+    if (isOpen) {
+      const _today = new Date().toISOString().split('T')[0];
+      const colStyle = {
+        open:'background:var(--accent-soft);color:var(--accent)',
+        in_progress:'background:var(--warn-soft);color:#b45309',
+        review:'background:rgba(124,58,237,.1);color:#7c3aed',
+        done:'background:var(--success-soft);color:var(--success)',
+      };
+      const colLabel = {open:'Open',in_progress:'In Progress',review:'Review',done:'Done'};
+      const taskRows = tasks.map(t => {
+        const isOverdue = t.dueDate && t.dueDate < _today && t.status !== 'done';
+        const prio = PRIO[t.priority];
+        return `<div class="action-item" onclick="showTaskModal('${t.id}')">
+          <div class="ai-title">${t.title}</div>
+          ${prio ? `<span class="kcard-prio ${prio.cls}" style="font-size:10px;flex-shrink:0">${prio.label}</span>` : ''}
+          ${t.dueDate ? `<span class="ai-due ${isOverdue?'overdue':''}" style="flex-shrink:0">${isOverdue?'⚠ ':''}${fmtDate(t.dueDate)}</span>` : ''}
+          <span style="padding:1px 7px;border-radius:6px;font-size:10px;font-weight:600;flex-shrink:0;${colStyle[t.status]||colStyle.open}">${colLabel[t.status]||t.status}</span>
+        </div>`;
+      }).join('');
+      const momContent = m.mom || (m.notes ? `<div class="mom-block"><div class="mom-heading">📋 Notes</div><p style="color:var(--fg);font-size:13px;line-height:1.65;margin:0">${m.notes.replace(/\n/g,'<br>')}</p></div>` : '');
+      bodyHtml = `<div class="mtg-body open">
+        <div class="body-grid">
+          <div>
+            <div class="body-label">Attendees</div>
+            <div class="chips">${m.attendees.map(a => `<span class="chip">${a}</span>`).join('')}</div>
+          </div>
+          ${momContent ? `<div>
+            <div class="body-label">Minutes of Meeting</div>
+            <div class="mom-content" style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px">${momContent}</div>
+          </div>` : ''}
+          ${tasks.length ? `<div>
+            <div class="body-label">Action Items (${doneTasks.length}/${tasks.length} done)</div>
+            <div>${taskRows}</div>
+          </div>` : ''}
+          <div style="display:flex;justify-content:flex-end;gap:6px">
+            <button class="open-link" onclick="goMeeting('${m.id}')">Open full view →</button>
+          </div>
+        </div>
+      </div>`;
+    } else {
+      bodyHtml = `<div class="mtg-body"></div>`;
+    }
+
+    const pillColor = isUpcoming ? 'background:var(--accent-soft);color:var(--accent)' : 'background:var(--success-soft);color:var(--success)';
+    const pillText = isUpcoming ? `${tasks.length} tasks` : `✅ ${tasks.length} tasks`;
+
+    return `<div class="mtg-card">
+      <div class="mtg-card-head" onclick="toggleMeetingCard('${m.id}')">
+        <div class="mtg-date-block"><div class="mtg-month">${month}</div><div class="mtg-day">${d}</div></div>
+        <div class="mtg-info">
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--accent);background:var(--accent-soft);padding:1px 6px;border-radius:5px;flex-shrink:0">Mtg</span>
+            <div class="mtg-title">${m.title}</div>
+          </div>
+          <div class="mtg-meta">
+            <span>👥 ${m.attendees.length} attendees</span>
+            ${m.aiSummary ? '<span style="color:var(--accent)">🤖 AI summary</span>' : (isUpcoming ? '<span style="color:var(--fg-faint)">Upcoming</span>' : '')}
+          </div>
+        </div>
+        <div class="mtg-right">
+          <span class="tasks-pill" style="${pillColor}">${pillText}</span>
+          <button class="expand-ico ${isOpen?'open':''}" onclick="event.stopPropagation();toggleMeetingCard('${m.id}')">▲</button>
+        </div>
+      </div>
+      ${bodyHtml}
+    </div>`;
+}
+
+function renderFilesTab() {
+  const voices = Object.values(DB.voices).filter(v => v.storyId === S.storyId);
+  const files = DB.files.filter(f => f.storyId === S.storyId);
+  const heights = [4,9,16,22,28,20,13,8,5,12,24,30,18,11,7,17,26,22,14,8,5,13,20,16,10,6,4,9,18,28,21,14];
+  const wf = heights.map(h => `<div class="wbar" style="height:${h}px"></div>`).join('');
+
+  const voiceSection = voices.length ? `
+    <div style="font-size:11px;font-weight:600;color:var(--fg-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">🎙 Recordings</div>
+    ${voices.map(v => `
+      <div class="voice-card">
+        <div class="play-btn" onclick="toast('▶ Playing: ${v.name}')">▶</div>
+        <div class="waveform">${wf}</div>
+        <div style="min-width:0">
+          <div style="font-size:12.5px;font-weight:600;margin-bottom:2px">${v.name}</div>
+          <div style="font-size:11px;color:var(--fg-muted)">${v.duration} · ${v.by} · Auto-transcribed</div>
+        </div>
+      </div>`).join('')}
+    <div style="margin-bottom:20px"></div>` : '';
+
+  const fileSection = files.length ? `
+    <div style="font-size:11px;font-weight:600;color:var(--fg-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">📄 Documents</div>
+    ${files.map(f => `
+      <div class="file-row" onclick="toast('📄 Opening ${f.name}')">
+        <span style="font-size:22px">${f.icon}</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f.name}</div>
+          <div style="font-size:11px;color:var(--fg-muted)">${f.size} · ${f.date} · ${f.by}</div>
+        </div>
+        <button class="btn-ghost" onclick="event.stopPropagation();toast('⬇ Downloading ${f.name}')">⬇</button>
+      </div>`).join('')}` : '';
+
+  return `<div style="display:flex;gap:8px;justify-content:flex-end;margin-bottom:16px">
+    <button style="background:rgba(239,68,68,.08);color:var(--danger);border:1px solid rgba(239,68,68,.2);border-radius:var(--radius-sm);padding:6px 13px;font-size:12.5px;font-weight:500;cursor:pointer;font-family:inherit" onclick="toast('🎙 Recording started…')">⏺ Record</button>
+    <button class="btn-ghost" onclick="toast('📎 File picker opening')">＋ Attach File</button>
+  </div>
+  ${voiceSection}${fileSection}
+  <div class="drop-zone" onclick="toast('📎 Drop files or audio')">
+    <div style="font-size:20px;margin-bottom:4px">📎</div>
+    Drop any file or audio here<br><span style="font-size:11px;opacity:.6">Audio will be auto-transcribed</span>
+  </div>`;
+}
+
+// ==================== KANBAN ====================
+const PRIO = {
+  urgent: {label:'Urgent', cls:'prio-urgent'},
+  high:   {label:'High',   cls:'prio-high'},
+  medium: {label:'Medium', cls:'prio-medium'},
+  low:    {label:'Low',    cls:'prio-low'},
+};
+const COL_STATUS = {
+  open:        {label:'Open',        color:'var(--accent)'},
+  in_progress: {label:'In Progress', color:'#b45309'},
+  review:      {label:'Review',      color:'#7c3aed'},
+  done:        {label:'Done',        color:'var(--success)'},
+};
+
+const STAGE_ORDER = ['open','in_progress','review','done'];
+
+function renderTasksKanban() {
+  const tasks = getStoryTasks(S.storyId);
+  const today = new Date().toISOString().split('T')[0];
+  const cols = Object.entries(COL_STATUS).map(([key, col]) => {
+    const colTasks = tasks.filter(t => t.status === key);
+    const cards = colTasks.map(t => {
+      const isOverdue = t.dueDate && t.dueDate < today && key !== 'done';
+      const prio = PRIO[t.priority];
+      const mem = ORG_MEMBERS.find(m => m.id === t.assignee);
+      return `<div class="kanban-card" draggable="true"
+        ondragstart="kanbanDragStart(event,'${t.id}')"
+        ondragend="kanbanDragEnd(event)"
+        onclick="showTaskModal('${t.id}')">
+        <div class="kcard-title">${t.title}</div>
+        ${t.description ? `<div class="kcard-desc">${t.description}</div>` : ''}
+        <div class="kcard-footer">
+          ${prio ? `<span class="kcard-prio ${prio.cls}">${prio.label}</span>` : ''}
+          ${t.dueDate ? `<span class="kcard-due ${isOverdue?'overdue':''}">${isOverdue?'⚠ ':''}${t.dueDate.slice(5).replace('-','/')}</span>` : ''}
+          ${t.comments?.length ? `<span style="font-size:10px;color:var(--fg-muted)">💬 ${t.comments.length}</span>` : ''}
+          ${mem ? `<div class="kcard-av" style="background:${mem.color}22;color:${mem.color}">${mem.id}</div>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+    return `<div class="kanban-col">
+      <div class="kc-head">
+        <span class="kc-label" style="color:${col.color}">${col.label}</span>
+        <span class="kc-count">${colTasks.length}</span>
+      </div>
+      <div class="kc-body" data-status="${key}"
+        ondragover="kanbanDragOver(event)"
+        ondragleave="kanbanDragLeave(event)"
+        ondrop="kanbanDrop(event,'${key}')">
+        ${cards || `<div style="font-size:11.5px;color:var(--fg-faint);text-align:center;padding:20px 0">Drop here</div>`}
+      </div>
+      ${key === 'open' ? `<button class="kc-add" onclick="showNewTaskModal('open')">＋ Create</button>` : ''}
+    </div>`;
+  }).join('');
+  return `<div class="kanban-board">${cols}</div>`;
+}
+
+let _dragTaskId = null;
+
+function kanbanDragStart(e, taskId) {
+  _dragTaskId = taskId;
+  e.currentTarget.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+}
+
+function kanbanDragEnd(e) {
+  e.currentTarget.classList.remove('dragging');
+  document.querySelectorAll('.kc-body').forEach(el => el.classList.remove('drag-over'));
+}
+
+function kanbanDragOver(e) {
+  e.preventDefault();
+  e.currentTarget.classList.add('drag-over');
+}
+
+function kanbanDragLeave(e) {
+  if (!e.currentTarget.contains(e.relatedTarget)) {
+    e.currentTarget.classList.remove('drag-over');
+  }
+}
+
+function kanbanDrop(e, targetStatus) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  if (!_dragTaskId) return;
+  const t = DB.tasks[_dragTaskId];
+  if (!t || t.status === targetStatus) return;
+
+  const fromIdx = STAGE_ORDER.indexOf(t.status);
+  const toIdx   = STAGE_ORDER.indexOf(targetStatus);
+
+  if (toIdx !== fromIdx + 1) {
+    const msg = toIdx < fromIdx
+      ? 'Tasks cannot move backwards.'
+      : `Cannot skip stages — move to "${COL_STATUS[STAGE_ORDER[fromIdx+1]].label}" first.`;
+    toast('⚠ ' + msg);
+    return;
+  }
+
+  if (targetStatus === 'done') {
+    showCompletionForm(_dragTaskId);
+  } else {
+    t.status = targetStatus;
+    if (S.view === 'myboard') renderMyBoard(); else renderStoryMain();
+    toast(`Moved to ${COL_STATUS[targetStatus].label}`);
+  }
+  _dragTaskId = null;
+}
+
+// ==================== COMPLETION FORM ====================
+let _CF = { taskId: null, activeInputs: new Set(['notes']), attachments: [], recording: null, isRecording: false };
+
+function showCompletionForm(taskId) {
+  _CF.taskId = taskId;
+  _CF.activeInputs = new Set(['notes']);
+  _CF.attachments = [];
+  _CF.recording = null;
+  _CF.isRecording = false;
+  const t = DB.tasks[taskId];
+  const overlay = document.createElement('div');
+  overlay.className = 'cf-overlay';
+  overlay.id = 'cf-overlay';
+  overlay.innerHTML = `
+    <div class="cf-modal">
+      <div class="cf-head">
+        <div class="cf-title">✅ Mark as Done: ${t.title}</div>
+        <div class="cf-sub">Add evidence of completion — combine notes, recordings, and files. AI will synthesise into a second-brain note.</div>
+      </div>
+      <div class="cf-body">
+        <div>
+          <div class="cf-label" style="margin-bottom:8px">How would you like to document this?</div>
+          <div class="cf-input-tabs">
+            <button class="cf-tab active" data-input="notes" onclick="cfToggleInput('notes')">📝 Notes</button>
+            <button class="cf-tab" data-input="record" onclick="cfToggleInput('record')">🎙 Recording</button>
+            <button class="cf-tab" data-input="files" onclick="cfToggleInput('files')">📎 Attach</button>
+          </div>
+        </div>
+        <div id="cf-inputs-wrap" class="cf-input-area"></div>
+        <div id="cf-result-wrap" style="display:none">
+          <div class="cf-label" style="margin-bottom:6px">✨ Second Brain Note</div>
+          <div class="cf-result-box" id="cf-result"></div>
+        </div>
+      </div>
+      <div class="cf-footer">
+        <button class="btn-ghost" onclick="closeCompletionForm()">Cancel</button>
+        <button class="btn-ghost" id="cf-ai-btn" onclick="generateCompletionNote()">✨ Convert with AI</button>
+        <button class="btn-primary" onclick="submitCompletionForm()">✅ Mark Done</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  cfRenderInputs();
+  setTimeout(() => document.getElementById('cf-notes')?.focus(), 80);
+}
+
+function cfToggleInput(type) {
+  if (_CF.activeInputs.has(type)) {
+    if (_CF.activeInputs.size === 1) return;
+    _CF.activeInputs.delete(type);
+  } else {
+    _CF.activeInputs.add(type);
+  }
+  document.querySelectorAll('.cf-tab').forEach(btn => {
+    btn.classList.toggle('active', _CF.activeInputs.has(btn.dataset.input));
+  });
+  cfRenderInputs();
+}
+
+function cfRenderInputs() {
+  const wrap = document.getElementById('cf-inputs-wrap');
+  if (!wrap) return;
+  let html = '';
+
+  if (_CF.activeInputs.has('notes')) {
+    html += `<div>
+      <div class="cf-label">Notes / Paste</div>
+      <textarea class="cf-textarea" id="cf-notes" placeholder="Describe what was done, key outcomes, decisions made, blockers resolved…">${document.getElementById('cf-notes')?.value||''}</textarea>
+    </div>`;
+  }
+
+  if (_CF.activeInputs.has('record')) {
+    if (_CF.recording) {
+      html += `<div class="cf-recording-chip">
+        🎙 <span style="flex:1">${_CF.recording}</span>
+        <button style="background:none;border:none;cursor:pointer;color:var(--danger);font-size:13px" onclick="cfRemoveRecording()">✕</button>
+      </div>`;
+    } else {
+      html += `<div>
+        <div class="cf-label">Recording</div>
+        <button class="cf-record-btn ${_CF.isRecording?'recording':''}" id="cf-rec-btn" onclick="cfToggleRecord()">
+          ${_CF.isRecording ? '⏹ Stop Recording' : '⏺ Start Recording'}
+        </button>
+        ${_CF.isRecording ? `<div style="font-size:11px;color:var(--danger);text-align:center;margin-top:6px;animation:rec-pulse 1.2s infinite">Recording… <span id="cf-rec-timer">0:00</span></div>` : ''}
+      </div>`;
+    }
+  }
+
+  if (_CF.activeInputs.has('files')) {
+    const chips = _CF.attachments.map((f,i) => `
+      <div class="cf-attachment">
+        <span>${f.icon}</span><span>${f.name}</span>
+        <button onclick="cfRemoveAttachment(${i})">✕</button>
+      </div>`).join('');
+    html += `<div>
+      <div class="cf-label">Files & Images</div>
+      <div class="cf-dropzone" onclick="cfFakeAttach()" ondragover="event.preventDefault();this.style.borderColor='var(--accent)'" ondragleave="this.style.borderColor=''" ondrop="event.preventDefault();cfFakeAttach()">
+        <div style="font-size:22px;margin-bottom:4px">📎</div>
+        Drop files or images here, or <span style="color:var(--accent);text-decoration:underline;cursor:pointer">browse</span>
+        <div style="font-size:11px;margin-top:3px;opacity:.6">Docs, spreadsheets, images, PDFs</div>
+      </div>
+      ${chips ? `<div class="cf-attachments" style="margin-top:8px">${chips}</div>` : ''}
+    </div>`;
+  }
+
+  wrap.innerHTML = html;
+  if (_CF.activeInputs.has('notes') && !_CF.isRecording) {
+    document.getElementById('cf-notes')?.focus();
+  }
+}
+
+let _cfRecInterval = null;
+let _cfRecSeconds = 0;
+
+function cfToggleRecord() {
+  if (_CF.isRecording) {
+    clearInterval(_cfRecInterval);
+    const mins = Math.floor(_cfRecSeconds/60);
+    const secs = String(_cfRecSeconds%60).padStart(2,'0');
+    _CF.recording = `Voice recording — ${mins}:${secs}`;
+    _CF.isRecording = false;
+    _cfRecSeconds = 0;
+  } else {
+    _CF.isRecording = true;
+    _cfRecSeconds = 0;
+    _cfRecInterval = setInterval(() => {
+      _cfRecSeconds++;
+      const el = document.getElementById('cf-rec-timer');
+      if (el) el.textContent = Math.floor(_cfRecSeconds/60)+':'+String(_cfRecSeconds%60).padStart(2,'0');
+    }, 1000);
+  }
+  cfRenderInputs();
+}
+
+function cfRemoveRecording() { _CF.recording = null; cfRenderInputs(); }
+
+const CF_FILE_SAMPLES = [
+  {icon:'📄', name:'completion_report.pdf'},
+  {icon:'🖼', name:'screenshot_result.png'},
+  {icon:'📊', name:'outcome_summary.xlsx'},
+  {icon:'📝', name:'notes_doc.docx'},
+];
+function cfFakeAttach() {
+  const sample = CF_FILE_SAMPLES[_CF.attachments.length % CF_FILE_SAMPLES.length];
+  _CF.attachments.push(sample);
+  cfRenderInputs();
+}
+function cfRemoveAttachment(i) { _CF.attachments.splice(i, 1); cfRenderInputs(); }
+
+function closeCompletionForm() {
+  clearInterval(_cfRecInterval);
+  document.getElementById('cf-overlay')?.remove();
+  _CF.taskId = null; _CF.isRecording = false;
+}
+
+function generateCompletionNote() {
+  const notes = (document.getElementById('cf-notes')?.value || '').trim();
+  const hasContent = notes || _CF.recording || _CF.attachments.length;
+  const t = DB.tasks[_CF.taskId];
+  if (!hasContent) { toast('Add at least one piece of evidence'); return; }
+  const btn = document.getElementById('cf-ai-btn');
+  btn.disabled = true; btn.textContent = '✨ Generating…';
+  setTimeout(() => {
+    const today = fmtDate(new Date().toISOString().split('T')[0]);
+    const sources = [
+      notes && `Notes: "${notes.substring(0,100)}${notes.length>100?'…':''}"`,
+      _CF.recording && `Voice recording (${_CF.recording})`,
+      _CF.attachments.length && `${_CF.attachments.length} attachment${_CF.attachments.length>1?'s':''}: ${_CF.attachments.map(f=>f.name).join(', ')}`,
+    ].filter(Boolean);
+    const lines = notes ? notes.split(/[.!\n]+/).map(s=>s.trim()).filter(s=>s.length>8) : [];
+    const outcomes = lines.slice(0,3).map(l=>`<li>${l.replace(/^[-•]\s*/,'')}</li>`).join('') || `<li>${t.title} — completed successfully.</li>`;
+    const note = `<h3>📌 What was done</h3><p>${notes||t.title}</p>
+<h3>🎯 Key Outcomes</h3><ul>${outcomes}</ul>
+<h3>📎 Evidence</h3><ul>${sources.map(s=>`<li>${s}</li>`).join('')}</ul>
+<h3>🧠 Learnings</h3><ul><li>Closed on ${today} — see linked task for full context.</li></ul>
+<h3>🔗 Linked to</h3><ul><li>${t.id?.toUpperCase()} · ${DB.stories[t.storyId]?.name||t.storyId}</li></ul>`;
+    const wrap = document.getElementById('cf-result-wrap');
+    const result = document.getElementById('cf-result');
+    if (wrap) wrap.style.display = 'block';
+    if (result) result.innerHTML = note;
+    t._completionNote = note;
+    btn.disabled = false; btn.textContent = '↺ Regenerate';
+  }, 1300);
+}
+
+function submitCompletionForm() {
+  const t = DB.tasks[_CF.taskId];
+  if (!t) return;
+  t.status = 'done';
+  const notes = document.getElementById('cf-notes')?.value || '';
+  if (!t._completionNote) t._completionNote = notes || t.title;
+  closeCompletionForm();
+  if (S.view === 'myboard') renderMyBoard(); else renderStoryMain();
+  renderSidebar();
+  toast('✅ Task marked done');
+}
+
+// ==================== TASK HELPERS ====================
+function getStoryTasks(storyId) {
+  const meetingIds = Object.values(DB.meetings).filter(m => m.storyId === storyId).map(m => m.id);
+  const memoIds    = Object.values(DB.memos).filter(m => m.storyId === storyId).map(m => m.id);
+  return Object.values(DB.tasks).filter(t =>
+    meetingIds.includes(t.meetingId) || memoIds.includes(t.memoId) || t.storyId === storyId
+  );
+}
+
+// ==================== MEETING EDITOR ====================
+function renderMeeting() {
+  const m = DB.meetings[S.meetingId];
+  if (!m) { document.getElementById('main').innerHTML = '<div style="padding:40px">Meeting not found</div>'; return; }
+  const story = DB.stories[m.storyId];
+  const proj  = story ? DB.projects[story.projectId] : null;
+
+  document.getElementById('main').innerHTML = `
+    <div class="mtg-editor-wrap">
+      <div class="mtg-editor-left">
+        <div class="mtg-editor-topbar">
+          <div class="breadcrumb">
+            <span class="crumb" onclick="goStory('${proj?.id||S.projectId}','${story?.id||S.storyId}')">
+              <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${proj?.color||'#6366f1'};margin-right:3px;vertical-align:middle"></span>
+              ${proj?.name||'Project'}
+            </span>
+            <span class="crumb-sep">/</span>
+            <span class="crumb" onclick="goStory('${proj?.id||S.projectId}','${story?.id||S.storyId}')">${story?.name||'Story'}</span>
+            <span class="crumb-sep">/</span>
+            <span class="badge" style="background:rgba(79,70,229,.08);color:var(--accent)">🗓 Meeting</span>
+          </div>
+          <input class="mtg-title-editable" id="mtg-title-input" value="${m.title}"
+            onblur="saveTitle('${m.id}',this.value)"
+            onkeydown="if(event.key==='Enter')this.blur()">
+          <div class="editor-meta-row">
+            <span class="meta-chip">📅 <input type="date" value="${m.date}" style="background:none;border:none;color:var(--fg-muted);font-size:11.5px;cursor:pointer;outline:none" onchange="DB.meetings['${m.id}'].date=this.value;renderSidebar()"></span>
+          </div>
+        </div>
+        <div class="editor-body" id="editor-body">
+          <div class="editor-section" id="attendee-section">
+            ${renderAttendeesHTML(m)}
+          </div>
+          <div class="editor-section">
+            <div class="editor-label" style="display:flex;align-items:center;justify-content:space-between">
+              <span>AI Summary</span>
+              <button class="gen-btn" id="gen-ai-btn" onclick="generateAI('${m.id}')">
+                ✨ ${m.aiSummary ? 'Regenerate' : 'Generate Summary'}
+              </button>
+            </div>
+            <div class="ai-summary-box" id="ai-summary-content">
+              ${m.aiSummary
+                ? `<div class="ai-summary-text">${m.aiSummary}</div>`
+                : `<div class="ai-summary-text" style="opacity:.5">Click "Generate Summary" to get a quick TL;DR of this meeting.</div>`}
+            </div>
+          </div>
+          <div class="editor-section">
+            <div class="editor-label" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+              <span>MoM</span>
+              <div style="display:flex;gap:6px">
+                <button class="btn-ghost" style="font-size:11.5px;padding:3px 9px" onclick="toggleMoMEdit('${m.id}')">✏️ Edit</button>
+                <button class="gen-btn" onclick="generateMoM('${m.id}')">✨ ${m.mom ? 'Regenerate MoM' : 'Generate MoM'}</button>
+              </div>
+            </div>
+            <div id="mom-view">
+              ${m.mom
+                ? `<div class="mom-display">${m.mom}</div>`
+                : `<div class="mom-display"><div class="mom-empty">No MoM yet — click "Generate MoM" to create structured minutes from the raw notes, or edit to write manually.</div></div>`}
+            </div>
+            <textarea class="notes-editor" id="notes-editor" style="display:none;margin-top:8px" placeholder="Write raw notes here — AI will format them into MoM…" oninput="saveNotes('${m.id}',this.value)">${m.notes}</textarea>
+          </div>
+          <div class="editor-section">
+            <div class="editor-label" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+              <span>Action Items</span>
+              <button class="btn-ghost" style="font-size:11.5px;padding:3px 10px" onclick="showNewTaskModal('open','${m.id}')">＋ Add Task</button>
+            </div>
+            <div id="meeting-task-list">${renderMeetingTaskListHTML(m.id)}</div>
+          </div>
+        </div>
+      </div>
+      <div class="mtg-editor-right">
+        <div class="er-head">Meeting Info</div>
+        <div class="er-scroll">
+          <div class="er-section">
+            <div class="er-label">People</div>
+            ${m.attendees.map(a => {
+              const first = a[0].toUpperCase();
+              const avColor = AVATAR_COLORS[first] || '#6366f1';
+              return `<div class="er-person">
+                <div class="er-avatar" style="background:${avColor}22;color:${avColor}">${first}</div>
+                <span>${a}</span>
+              </div>`;
+            }).join('')}
+          </div>
+          <div class="er-section">
+            <div class="er-label">Story</div>
+            <div style="padding:6px;background:var(--bg);border-radius:var(--radius-sm);font-size:12px;color:var(--fg-muted);cursor:pointer" onclick="goStory('${proj?.id||S.projectId}','${story?.id||S.storyId}')">
+              📋 ${story?.name||'Story'}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderAttendeesHTML(m) {
+  const chips = m.attendees.map((a,i) =>
+    `<span class="chip" style="display:inline-flex;align-items:center;gap:5px">${a} <span onclick="removeAttendee('${m.id}',${i})" style="cursor:pointer;opacity:.5;font-size:10px;line-height:1">✕</span></span>`
+  ).join('');
+  return `<div class="editor-label">Attendees</div>
+    <div class="chips" id="attendee-chips">${chips}</div>
+    <div class="attendee-input-row" style="margin-top:7px">
+      <input class="attendee-input" id="attendee-input" placeholder="Add attendee name…" onkeydown="if(event.key==='Enter')addAttendee('${m.id}')">
+      <button class="btn-ghost" onclick="addAttendee('${m.id}')">＋ Add</button>
+    </div>`;
+}
+
+function renderAttendees(meetingId) {
+  const m = DB.meetings[meetingId];
+  if (!m) return;
+  const sec = document.getElementById('attendee-section');
+  if (sec) sec.innerHTML = renderAttendeesHTML(m);
+}
+
+function renderMeetingTaskListHTML(meetingId) {
+  const m = DB.meetings[meetingId];
+  if (!m) return '<div style="font-size:12px;color:var(--fg-faint);padding:8px 0">No tasks yet — add one below or generate from MoM.</div>';
+  const today = new Date().toISOString().split('T')[0];
+  const colStyle = {
+    open:        'background:var(--accent-soft);color:var(--accent)',
+    in_progress: 'background:var(--warn-soft);color:#b45309',
+    review:      'background:rgba(124,58,237,.1);color:#7c3aed',
+    done:        'background:var(--success-soft);color:var(--success)',
+  };
+  const colLabel = {open:'Open', in_progress:'In Progress', review:'Review', done:'Done'};
+  return m.taskIds.map(id => {
+    const t = DB.tasks[id];
+    if (!t) return '';
+    const isOverdue = t.dueDate && t.dueDate < today && t.status !== 'done';
+    const prio = PRIO[t.priority];
+    return `<div class="action-item" onclick="showTaskModal('${t.id}')">
+      <div class="ai-title">${t.title}</div>
+      ${prio ? `<span class="kcard-prio ${prio.cls}" style="font-size:10px;flex-shrink:0">${prio.label}</span>` : ''}
+      ${t.dueDate ? `<span class="ai-due ${isOverdue?'overdue':''}" style="flex-shrink:0">${isOverdue?'⚠ ':''}${t.dueDate.slice(5).replace('-','/')}</span>` : ''}
+      <span style="padding:1px 7px;border-radius:6px;font-size:10px;font-weight:600;flex-shrink:0;${colStyle[t.status]||colStyle.open}">${colLabel[t.status]||t.status}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderMeetingTaskList() {
+  const el = document.getElementById('meeting-task-list');
+  if (el && S.meetingId) el.innerHTML = renderMeetingTaskListHTML(S.meetingId);
+}
+
+function renderAISummary(meetingId) {
+  const m = DB.meetings[meetingId];
+  if (!m) return;
+  const box = document.getElementById('ai-summary-content');
+  if (box) box.innerHTML = `<div class="ai-summary-text">${m.aiSummary}</div>`;
+  const btn = document.getElementById('gen-ai-btn');
+  if (btn) btn.innerHTML = '✨ Regenerate Summary';
+}
+
+// ==================== TASK MODAL ====================
+const _TM = { taskId: null, isNew: false, meetingId: null, initStatus: 'open' };
+
+function showTaskModal(taskId) {
+  _TM.taskId = taskId; _TM.isNew = false;
+  history.pushState(null, '', '#task/' + taskId);
+  _renderTaskModal();
+}
+
+function showNewTaskModal(status, meetingId) {
+  _TM.taskId = null; _TM.isNew = true;
+  _TM.initStatus = status || 'open';
+  _TM.meetingId = meetingId || null;
+  _renderTaskModal();
+}
+
+function _renderTaskModal() {
+  const t = _TM.isNew ? null : DB.tasks[_TM.taskId];
+  const today = new Date().toISOString().split('T')[0];
+
+  const statusOpts = Object.entries(COL_STATUS).map(([k,v]) =>
+    `<option value="${k}" ${(t?.status||_TM.initStatus)===k?'selected':''}>${v.label}</option>`).join('');
+  const prioOpts = ['urgent','high','medium','low'].map(k =>
+    `<option value="${k}" ${(t?.priority||'medium')===k?'selected':''}>${PRIO[k].label}</option>`).join('');
+  const assignOpts = ORG_MEMBERS.map(m =>
+    `<option value="${m.id}" ${(t?.assignee||'R')===m.id?'selected':''}>${m.name}</option>`).join('');
+
+  const comments = (t?.comments||[]).map(c => {
+    const mem = ORG_MEMBERS.find(m => m.id === c.authorId);
+    return `<div class="comment">
+      <div class="comment-av" style="background:${mem?.color||'#6366f1'}22;color:${mem?.color||'#6366f1'}">${c.authorId}</div>
+      <div class="comment-body">
+        <div class="comment-meta"><b>${c.author}</b> · ${c.date}</div>
+        <div class="comment-text">${c.text}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const attachList = (t?.attachments||[]).map(a =>
+    `<div style="display:flex;align-items:center;gap:6px;font-size:12px;padding:5px 8px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:4px">
+      <span>📎</span><span style="flex:1">${a}</span>
+    </div>`).join('');
+
+  const html = `<div class="task-modal-overlay" id="task-modal-overlay" onclick="if(event.target===this)closeTaskModal()">
+    <div class="task-modal">
+      <div class="tm-header">
+        <div style="flex:1;min-width:0">
+          ${!_TM.isNew ? `<span class="tm-task-id" onclick="copyTaskLink()" title="Click to copy link">#${_TM.taskId?.toUpperCase()}</span>` : ''}
+          <input class="tm-title-input" id="tm-title" placeholder="Task title…" value="${t?.title||''}">
+        </div>
+        <button class="tm-close" onclick="closeTaskModal()">✕</button>
+      </div>
+      <div class="tm-body">
+        <div class="tm-main">
+          <div>
+            <div class="tm-field-label">Description</div>
+            <textarea class="tm-desc" id="tm-desc" placeholder="Add more detail…">${t?.description||''}</textarea>
+          </div>
+          <div>
+            <div class="tm-field-label">Attachments</div>
+            <div id="tm-attach-list">${attachList}</div>
+            <div class="tm-attach-zone" onclick="toast('📎 File picker — coming in deploy')">＋ Attach file, image, or document</div>
+          </div>
+          <hr class="tm-divider">
+          <div>
+            <div class="activity-label">Activity</div>
+            <div id="tm-comments">${comments||'<div style="font-size:12px;color:var(--fg-faint);margin-bottom:12px">No comments yet.</div>'}</div>
+            <div class="comment-input-row">
+              <div class="comment-av" style="background:rgba(99,102,241,.12);color:var(--accent);width:26px;height:26px;border-radius:50%;font-size:11px;font-weight:700;display:grid;place-items:center;flex-shrink:0">R</div>
+              <textarea class="comment-input" id="tm-comment-input" placeholder="Add a comment…" rows="1"
+                onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();submitTaskComment()}"></textarea>
+              <button class="tm-save" onclick="submitTaskComment()" style="align-self:flex-end">Send</button>
+            </div>
+          </div>
+        </div>
+        <div class="tm-sidebar">
+          <div>
+            <div class="tm-field-label">Status</div>
+            <select class="tm-select" id="tm-status">${statusOpts}</select>
+          </div>
+          <div>
+            <div class="tm-field-label">Priority</div>
+            <select class="tm-select" id="tm-priority">${prioOpts}</select>
+          </div>
+          <div>
+            <div class="tm-field-label">Assignee</div>
+            <select class="tm-select" id="tm-assignee">${assignOpts}</select>
+          </div>
+          <div>
+            <div class="tm-field-label">Due Date</div>
+            <input class="tm-date-input" id="tm-due" type="date" value="${t?.dueDate||''}">
+          </div>
+          <hr class="tm-divider" style="margin:4px -14px">
+          <button class="tm-save" style="width:100%;text-align:center" onclick="saveTaskModal()">${_TM.isNew ? 'Create Task' : 'Save Changes'}</button>
+          ${!_TM.isNew ? `<button onclick="deleteTask('${t?.id}');closeTaskModal()" style="width:100%;border:none;background:none;color:var(--danger);font-size:12px;cursor:pointer;padding:4px;font-family:inherit">Delete task</button>` : ''}
+        </div>
+      </div>
+    </div>
+  </div>`;
+
+  document.body.insertAdjacentHTML('beforeend', html);
+  setTimeout(() => document.getElementById('tm-title')?.focus(), 60);
+}
+
+function closeTaskModal() {
+  document.getElementById('task-modal-overlay')?.remove();
+  history.pushState(null, '', window.location.pathname);
+}
+
+function copyTaskLink() {
+  navigator.clipboard.writeText(window.location.href)
+    .then(() => toast('🔗 Link copied to clipboard'))
+    .catch(() => toast('Copy: ' + window.location.href));
+}
+
+window.addEventListener('hashchange', () => {
+  const m = location.hash.match(/^#task\/(.+)$/);
+  if (m && DB.tasks[m[1]]) showTaskModal(m[1]);
+});
+// Open task from URL on load
+(function() {
+  const m = location.hash.match(/^#task\/(.+)$/);
+  if (m && DB.tasks[m[1]]) setTimeout(() => showTaskModal(m[1]), 200);
+})();
+
+function saveTaskModal() {
+  const title = (document.getElementById('tm-title')?.value||'').trim();
+  if (!title) { toast('Task title is required'); return; }
+  const desc    = document.getElementById('tm-desc')?.value||'';
+  const status  = document.getElementById('tm-status')?.value||'open';
+  const priority= document.getElementById('tm-priority')?.value||'medium';
+  const assignee= document.getElementById('tm-assignee')?.value||'R';
+  const dueDate = document.getElementById('tm-due')?.value||'';
+
+  if (_TM.isNew) {
+    const id = uid('t');
+    const storyId = S.storyId;
+    const meetingId = _TM.meetingId||null;
+    DB.tasks[id] = {id, title, description:desc, status, priority, dueDate, assignee,
+      meetingId, storyId, source: meetingId ? 'meeting' : 'general', attachments:[], comments:[]};
+    if (meetingId && DB.meetings[meetingId]) DB.meetings[meetingId].taskIds.push(id);
+    toast(`Task "${title}" created`);
+  } else {
+    const t = DB.tasks[_TM.taskId];
+    if (t) Object.assign(t, {title, description:desc, status, priority, dueDate, assignee});
+    toast('Task updated');
+  }
+  closeTaskModal();
+  if (S.view === 'story' && S.storyTab === 'tasks') renderStoryMain();
+  else if (S.view === 'meeting') renderMeetingTaskList();
+  renderSidebar();
+}
+
+function submitTaskComment() {
+  const input = document.getElementById('tm-comment-input');
+  const text = (input?.value||'').trim();
+  if (!text) return;
+  if (_TM.isNew) { toast('Save the task first before commenting'); return; }
+  const t = DB.tasks[_TM.taskId];
+  if (!t) return;
+  if (!t.comments) t.comments = [];
+  const id = uid('c');
+  t.comments.push({id, authorId:'R', author:'Rey Putra', text, date:'Just now'});
+  const box = document.getElementById('tm-comments');
+  if (box) {
+    box.innerHTML += `<div class="comment">
+      <div class="comment-av" style="background:rgba(99,102,241,.12);color:var(--accent)">R</div>
+      <div class="comment-body">
+        <div class="comment-meta"><b>Rey Putra</b> · Just now</div>
+        <div class="comment-text">${text}</div>
+      </div>
+    </div>`;
+    box.scrollTop = box.scrollHeight;
+  }
+  input.value = '';
+  toast('Comment added');
+}
+
+function deleteTask(taskId) {
+  const t = DB.tasks[taskId];
+  if (!t) return;
+  if (t.meetingId && DB.meetings[t.meetingId]) {
+    DB.meetings[t.meetingId].taskIds = DB.meetings[t.meetingId].taskIds.filter(x => x !== taskId);
+  }
+  delete DB.tasks[taskId];
+  toast('Task deleted');
+}
+
+// ==================== INBOX ====================
+let _boardDD = null;
+function toggleBoardDD(id, e) {
+  e.stopPropagation();
+  _boardDD = (_boardDD === id) ? null : id;
+  document.querySelectorAll('.filter-panel').forEach(p => p.classList.toggle('open', p.dataset.dd === _boardDD));
+}
+document.addEventListener('click', () => {
+  _boardDD = null;
+  document.querySelectorAll('.filter-panel').forEach(p => p.classList.remove('open'));
+});
+
+function renderMyBoard() {
+  const today   = new Date().toISOString().split('T')[0];
+  const filter  = S.myBoardFilter;
+  const srcType = S.myBoardSourceType;
+  const search  = (S.myBoardSearch || '').toLowerCase();
+  const allTasks = Object.values(DB.tasks);
+
+  let filtered = allTasks;
+  if (filter === 'assigned') filtered = filtered.filter(t => t.assignee === 'R');
+  else if (filter === 'sent') filtered = filtered.filter(t => t.assignee && t.assignee !== 'R');
+  if (srcType === 'meeting') filtered = filtered.filter(t => t.meetingId);
+  else if (srcType === 'memo') filtered = filtered.filter(t => t.memoId);
+  if (search) filtered = filtered.filter(t => {
+    const story = t.storyId ? DB.stories[t.storyId] : null;
+    return t.title.toLowerCase().includes(search) || (story && story.name.toLowerCase().includes(search));
+  });
+
+  const priority = S.myBoardPriority;
+  if (priority !== 'all') filtered = filtered.filter(t => t.priority === priority);
+
+  const cols = Object.entries(COL_STATUS).map(([key, col]) => {
+    const colTasks = filtered.filter(t => t.status === key);
+    const cards = colTasks.map(t => {
+      const isOverdue = t.dueDate && t.dueDate < today && key !== 'done';
+      const prio = PRIO[t.priority];
+      const mem  = ORG_MEMBERS.find(m => m.id === t.assignee);
+      const story = t.storyId ? DB.stories[t.storyId] : null;
+      const proj  = story ? DB.projects[story.projectId] : null;
+      return `<div class="kanban-card" draggable="true"
+        ondragstart="kanbanDragStart(event,'${t.id}')"
+        ondragend="kanbanDragEnd(event)"
+        onclick="showTaskModal('${t.id}')">
+        <div class="kcard-title">${t.title}</div>
+        ${story ? `<div style="font-size:10.5px;color:var(--fg-muted);margin-bottom:4px;display:flex;align-items:center;gap:4px">${proj?`<span style="width:6px;height:6px;border-radius:50%;background:${proj.color};flex-shrink:0;display:inline-block"></span>`:''}<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${story.name}</span></div>` : ''}
+        <div class="kcard-footer">
+          ${prio ? `<span class="kcard-prio ${prio.cls}">${prio.label}</span>` : ''}
+          ${t.dueDate ? `<span class="kcard-due ${isOverdue?'overdue':''}">${isOverdue?'⚠ ':''}${t.dueDate.slice(5).replace('-','/')}</span>` : ''}
+          ${mem ? `<div class="kcard-av" style="background:${mem.color}22;color:${mem.color}">${mem.id}</div>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+    return `<div class="kanban-col">
+      <div class="kc-head">
+        <span class="kc-label" style="color:${col.color}">${col.label}</span>
+        <span class="kc-count">${colTasks.length}</span>
+      </div>
+      <div class="kc-body" data-status="${key}"
+        ondragover="kanbanDragOver(event)"
+        ondragleave="kanbanDragLeave(event)"
+        ondrop="kanbanDrop(event,'${key}')">
+        ${cards || `<div style="font-size:11.5px;color:var(--fg-faint);text-align:center;padding:24px 0">No tasks</div>`}
+      </div>
+      ${key === 'open' ? `<button class="kc-add" onclick="showNewBoardTaskModal()">＋ Create</button>` : ''}
+    </div>`;
+  }).join('');
+
+  // Label helpers
+  const srcLabel   = srcType==='meeting'?'🗓 Meetings':srcType==='memo'?'📝 Memos':'Source Type';
+  const qfLabel    = filter==='assigned'?'📥 Assigned to me':filter==='sent'?'📤 Sent by me':'Quick filters';
+  const prioLabel  = priority==='urgent'?'🔴 Urgent':priority==='high'?'🟠 High':priority==='medium'?'🟡 Medium':priority==='low'?'🟢 Low':'Priority';
+  const chevron    = `<svg width="10" height="10" viewBox="0 0 10 10" fill="none" style="opacity:.6"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+  const fpiRow = (val, label, cur, key) =>
+    `<div class="fpi ${cur===val?'sel':''}" onclick="S.${key}=S.${key}===${JSON.stringify(val)}?'all':${JSON.stringify(val)};_boardDD=null;renderMyBoard()">
+      <span class="fpi-check">${cur===val?'✓':''}</span>${label}</div>`;
+
+  document.getElementById('main').innerHTML = `
+    <div class="inbox-wrap">
+      <div class="inbox-head" style="padding:16px 22px 0">
+        <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:12px">
+          <div class="inbox-title">My Board</div>
+          <span style="font-size:12px;color:var(--fg-muted)">${filtered.filter(t=>t.status!=='done').length} open · ${filtered.length} total</span>
+        </div>
+        <div class="board-filters">
+          <div class="board-search">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.4" style="color:var(--fg-faint)"/><path d="M9.5 9.5L12 12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" style="color:var(--fg-faint)"/></svg>
+            <input placeholder="Search projects, meetings, memos &amp; tasks" value="${S.myBoardSearch||''}"
+              oninput="S.myBoardSearch=this.value;renderMyBoard()" onclick="event.stopPropagation()">
+          </div>
+          <div class="filter-dropdown">
+            <button class="filter-btn ${srcType!=='all'?'active':''}" onclick="toggleBoardDD('src',event)">
+              ${srcLabel} ${chevron}
+            </button>
+            <div class="filter-panel" data-dd="src">
+              ${fpiRow('all','All sources',srcType,'myBoardSourceType')}
+              <div class="filter-sep"></div>
+              ${fpiRow('meeting','🗓 Meetings',srcType,'myBoardSourceType')}
+              ${fpiRow('memo','📝 Memos',srcType,'myBoardSourceType')}
+            </div>
+          </div>
+          <div class="filter-dropdown">
+            <button class="filter-btn ${priority!=='all'?'active':''}" onclick="toggleBoardDD('prio',event)">
+              ${prioLabel} ${chevron}
+            </button>
+            <div class="filter-panel" data-dd="prio">
+              ${fpiRow('all','All priorities',priority,'myBoardPriority')}
+              <div class="filter-sep"></div>
+              ${fpiRow('urgent','🔴 Urgent',priority,'myBoardPriority')}
+              ${fpiRow('high','🟠 High',priority,'myBoardPriority')}
+              ${fpiRow('medium','🟡 Medium',priority,'myBoardPriority')}
+              ${fpiRow('low','🟢 Low',priority,'myBoardPriority')}
+            </div>
+          </div>
+          <div class="filter-dropdown">
+            <button class="filter-btn ${filter!=='all'?'active':''}" onclick="toggleBoardDD('qf',event)">
+              ${qfLabel} ${chevron}
+            </button>
+            <div class="filter-panel" data-dd="qf">
+              ${fpiRow('assigned','📥 Assigned to me',filter,'myBoardFilter')}
+              ${fpiRow('sent','📤 Sent by me',filter,'myBoardFilter')}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="inbox-body" style="overflow-x:auto">
+        <div class="kanban-board" style="min-width:fit-content">${cols}</div>
+      </div>
+    </div>`;
+}
+
+// ==================== NEW BOARD TASK MODAL ====================
+let _NBT = { linkType: 'story', projectId: null, storyId: null, sourceId: null, _title:'', _priority:'medium', _assignee:'R', _due:'' };
+
+function showNewBoardTaskModal() {
+  _NBT = { linkType: 'story', projectId: Object.keys(DB.projects)[0]||null, storyId: null, sourceId: null, _title:'', _priority:'medium', _assignee:'R', _due:'' };
+  _renderNBTModal();
+}
+
+function _nbtCapture() {
+  _NBT._title    = document.getElementById('nbt-title')?.value    || _NBT._title;
+  _NBT._priority = document.getElementById('nbt-priority')?.value || _NBT._priority;
+  _NBT._assignee = document.getElementById('nbt-assignee')?.value || _NBT._assignee;
+  _NBT._due      = document.getElementById('nbt-due')?.value      || _NBT._due;
+}
+
+function _renderNBTModal() {
+  document.getElementById('nbt-overlay')?.remove();
+  const lt = _NBT.linkType;
+
+  // Derive project+story from source when meeting/memo is selected
+  let derivedProjId  = _NBT.projectId;
+  let derivedStoryId = _NBT.storyId;
+  let greyed = false;
+
+  if ((lt === 'meeting' || lt === 'memo') && _NBT.sourceId) {
+    const src = lt === 'meeting' ? DB.meetings[_NBT.sourceId] : DB.memos[_NBT.sourceId];
+    if (src) {
+      derivedStoryId = src.storyId;
+      derivedProjId  = DB.stories[derivedStoryId]?.projectId || derivedProjId;
+      greyed = true;
+    }
+  }
+
+  // Dropdowns
+  const projOpts = Object.values(DB.projects).map(p =>
+    `<option value="${p.id}" ${derivedProjId===p.id?'selected':''}>${p.name}</option>`).join('');
+  const storyOpts = Object.values(DB.stories).filter(s => s.projectId === derivedProjId).map(s =>
+    `<option value="${s.id}" ${derivedStoryId===s.id?'selected':''}>${s.name}</option>`).join('');
+
+  let srcOpts = '';
+  if (lt === 'meeting') {
+    srcOpts = Object.values(DB.meetings).map(m =>
+      `<option value="${m.id}" ${_NBT.sourceId===m.id?'selected':''}>${m.title} · ${m.date}</option>`).join('');
+  } else if (lt === 'memo') {
+    srcOpts = Object.values(DB.memos).map(m =>
+      `<option value="${m.id}" ${_NBT.sourceId===m.id?'selected':''}>${m.title}</option>`).join('');
+  }
+
+  const tabBtn = (type, icon, label) =>
+    `<button class="nbt-tab ${lt===type?'active':''}" onclick="event.stopPropagation();_nbtCapture();_NBT.linkType='${type}';_NBT.sourceId=null;_renderNBTModal()">${icon} ${label}</button>`;
+
+  const greyStyle = 'opacity:.45;pointer-events:none;background:var(--bg)';
+
+  const html = `<div class="task-modal-overlay" id="nbt-overlay" onclick="if(event.target===this)document.getElementById('nbt-overlay').remove()">
+    <div class="task-modal" style="max-width:520px;width:90vw">
+      <div class="tm-header">
+        <div style="flex:1">
+          <div style="font-size:15px;font-weight:700;letter-spacing:-.01em">New Task</div>
+          <div style="font-size:11.5px;color:var(--fg-muted);margin-top:1px">Link to a project, meeting, or memo</div>
+        </div>
+        <button class="tm-close" onclick="document.getElementById('nbt-overlay').remove()">✕</button>
+      </div>
+      <div style="padding:0 20px 20px;overflow-y:auto;max-height:74vh">
+
+        <div style="margin-bottom:16px">
+          <div class="tm-field-label">Link to</div>
+          <div style="display:flex;gap:6px">
+            ${tabBtn('story','📋','Story')}
+            ${tabBtn('meeting','🗓','Meeting')}
+            ${tabBtn('memo','📝','Memo')}
+          </div>
+        </div>
+
+        ${(lt==='meeting'||lt==='memo') ? `
+        <div style="margin-bottom:12px">
+          <div class="tm-field-label">${lt==='meeting'?'🗓 Meeting':'📝 Memo'}</div>
+          <select class="tm-select" style="width:100%" onchange="event.stopPropagation();_nbtCapture();_NBT.sourceId=this.value;_renderNBTModal()">
+            <option value="">— Pick a ${lt==='meeting'?'meeting':'memo'} —</option>
+            ${srcOpts}
+          </select>
+        </div>` : ''}
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+          <div>
+            <div class="tm-field-label">Project</div>
+            <select class="tm-select" style="width:100%;${greyed?greyStyle:''}" id="nbt-proj"
+              onchange="event.stopPropagation();_nbtCapture();_NBT.projectId=this.value;_NBT.storyId=null;_renderNBTModal()" ${greyed?'disabled':''}>
+              <option value="">— Project —</option>${projOpts}
+            </select>
+          </div>
+          <div>
+            <div class="tm-field-label">Story</div>
+            <select class="tm-select" style="width:100%;${greyed||!derivedProjId?greyStyle:''}" id="nbt-story"
+              onchange="event.stopPropagation();_nbtCapture();_NBT.storyId=this.value" ${greyed||!derivedProjId?'disabled':''}>
+              <option value="">— Story —</option>${storyOpts}
+            </select>
+          </div>
+        </div>
+
+        ${greyed ? `<div style="font-size:11px;color:var(--fg-muted);background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 10px;margin-bottom:12px">
+          📌 Project &amp; Story are set from the selected ${lt}
+        </div>` : ''}
+
+        <hr class="tm-divider" style="margin:14px 0">
+
+        <div style="margin-bottom:12px">
+          <div class="tm-field-label">Task title</div>
+          <input class="tm-title-input" id="nbt-title" placeholder="What needs to be done?" value="${_NBT._title}" style="width:100%;box-sizing:border-box">
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px">
+          <div>
+            <div class="tm-field-label">Priority</div>
+            <select class="tm-select" id="nbt-priority" style="width:100%">
+              ${['urgent','high','medium','low'].map(k=>`<option value="${k}" ${(_NBT._priority||'medium')===k?'selected':''}>${PRIO[k].label}</option>`).join('')}
+            </select>
+          </div>
+          <div>
+            <div class="tm-field-label">Assignee</div>
+            <select class="tm-select" id="nbt-assignee" style="width:100%">
+              ${ORG_MEMBERS.map(m=>`<option value="${m.id}" ${(_NBT._assignee||'R')===m.id?'selected':''}>${m.name}</option>`).join('')}
+            </select>
+          </div>
+          <div>
+            <div class="tm-field-label">Due Date</div>
+            <input class="tm-date-input" id="nbt-due" type="date" value="${_NBT._due||''}" style="width:100%;box-sizing:border-box">
+          </div>
+        </div>
+
+        <button class="tm-save" style="width:100%;text-align:center;padding:10px" onclick="saveNewBoardTask()">＋ Create Task</button>
+      </div>
+    </div>
+  </div>`;
+
+  document.body.insertAdjacentHTML('beforeend', html);
+  setTimeout(() => document.getElementById('nbt-title')?.focus(), 60);
+}
+
+function saveNewBoardTask() {
+  _nbtCapture();
+  const title = _NBT._title.trim();
+  if (!title) { toast('⚠ Task title is required'); return; }
+
+  const lt = _NBT.linkType;
+  let storyId   = document.getElementById('nbt-story')?.value || _NBT.storyId;
+  let meetingId = null;
+  let memoId    = null;
+  let source    = 'general';
+
+  if (lt === 'meeting' && _NBT.sourceId) {
+    const mtg = DB.meetings[_NBT.sourceId];
+    if (mtg) { storyId = mtg.storyId; meetingId = _NBT.sourceId; source = 'meeting'; }
+  } else if (lt === 'memo' && _NBT.sourceId) {
+    const mem = DB.memos[_NBT.sourceId];
+    if (mem) { storyId = mem.storyId; memoId = _NBT.sourceId; source = 'memo'; }
+  }
+
+  if (!storyId) { toast('⚠ Please select a Story'); return; }
+
+  const id = uid('t');
+  DB.tasks[id] = { id, title, description:'', status:'open', priority:_NBT._priority||'medium',
+    dueDate:_NBT._due||'', assignee:_NBT._assignee||'R',
+    storyId, meetingId:meetingId||null, memoId:memoId||null, source, attachments:[], comments:[] };
+
+  if (meetingId && DB.meetings[meetingId]) DB.meetings[meetingId].taskIds.push(id);
+  if (memoId    && DB.memos[memoId])       DB.memos[memoId].taskIds.push(id);
+
+  document.getElementById('nbt-overlay').remove();
+  renderMyBoard();
+  renderSidebar();
+  toast(`✅ "${title}" created`);
+}
+
+function renderInbox() {
+  const _todI = new Date().toISOString().split('T')[0];
+  const myTasks = Object.values(DB.tasks).filter(t => t.assignee === 'R');
+  const open    = myTasks.filter(t => t.status !== 'done');
+  const done    = myTasks.filter(t => t.status === 'done');
+  const overdue = open.filter(t => t.dueDate && t.dueDate < _todI);
+
+  const colStyleInbox = {
+    open:        'background:var(--accent-soft);color:var(--accent)',
+    in_progress: 'background:var(--warn-soft);color:#b45309',
+    review:      'background:rgba(124,58,237,.1);color:#7c3aed',
+    done:        'background:var(--success-soft);color:var(--success)',
+  };
+  const colLabelInbox = {open:'Open', in_progress:'In Progress', review:'Review', done:'Done'};
+
+  const taskRow = (t) => {
+    const story = t.storyId ? DB.stories[t.storyId] : null;
+    const proj  = story ? DB.projects[story.projectId] : null;
+    const context = story ? story.name : '';
+    const isOvd = t.dueDate && t.dueDate < _todI && t.status !== 'done';
+    return `<div class="inbox-task" onclick="showTaskModal('${t.id}')">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:500;${t.status==='done'?'text-decoration:line-through;opacity:.5':''}">${t.title}</div>
+        ${context ? `<div style="font-size:11px;color:var(--fg-muted);margin-top:2px">📋 ${context}${proj?' · '+proj.name:''}</div>` : ''}
+        ${isOvd ? `<div style="font-size:10.5px;color:var(--danger);margin-top:2px;font-weight:600">⚠ Due ${t.dueDate}</div>` : (t.dueDate ? `<div style="font-size:10.5px;color:var(--fg-muted);margin-top:2px">📅 Due ${t.dueDate}</div>` : '')}
+      </div>
+      <span class="task-status" style="${colStyleInbox[t.status]||colStyleInbox.open}">${colLabelInbox[t.status]||t.status}</span>
+    </div>`;
+  };
+
+  document.getElementById('main').innerHTML = `
+    <div class="inbox-wrap">
+      <div class="inbox-head">
+        <div class="inbox-title">My Inbox</div>
+        <div class="inbox-sub">${open.length} open · ${overdue.length} overdue · ${done.length} done</div>
+      </div>
+      <div class="inbox-body">
+        ${overdue.length ? `<div class="inbox-group">
+          <div class="inbox-group-label">⚠️ Overdue <span class="tg-count" style="background:var(--danger-soft);color:var(--danger)">${overdue.length}</span></div>
+          ${overdue.map(taskRow).join('')}
+        </div>` : ''}
+        <div class="inbox-group">
+          <div class="inbox-group-label">🔵 Open <span class="tg-count">${open.filter(t=>!(t.dueDate&&t.dueDate<_todI)).length}</span></div>
+          ${open.filter(t=>!(t.dueDate&&t.dueDate<_todI)).map(taskRow).join('')}
+        </div>
+        ${done.length ? `<div class="inbox-group">
+          <div class="inbox-group-label">✅ Done <span class="tg-count" style="background:var(--success-soft);color:var(--success)">${done.length}</span></div>
+          ${done.map(taskRow).join('')}
+        </div>` : ''}
+      </div>
+    </div>`;
+}
+
+// ==================== PROJECT VIEW ====================
+function renderProject() {
+  const proj = DB.projects[S.projectId];
+  if (!proj) return;
+  const stories = Object.values(DB.stories).filter(s => s.projectId === S.projectId);
+  const storyIds = stories.map(s => s.id);
+  const allMeetings = Object.values(DB.meetings).filter(m => storyIds.includes(m.storyId));
+  const meetingIds = allMeetings.map(m => m.id);
+  const allTasks = Object.values(DB.tasks).filter(t => meetingIds.includes(t.meetingId) || storyIds.includes(t.storyId));
+  const _todP = new Date().toISOString().split('T')[0];
+  const doneTasks = allTasks.filter(t => t.status === 'done');
+  const overdueTasks = allTasks.filter(t => t.status !== 'done' && t.dueDate && t.dueDate < _todP);
+
+  const statusMap = {
+    in_progress:{label:'In Progress',color:'#b45309',bg:'var(--warn-soft)'},
+    open:{label:'Open',color:'var(--accent)',bg:'var(--accent-soft)'},
+    done:{label:'Done',color:'var(--success)',bg:'var(--success-soft)'}
+  };
+
+  const storyCard = (st) => {
+    const st_status = statusMap[st.status] || statusMap.open;
+    const mtgs = Object.values(DB.meetings).filter(m => m.storyId === st.id).sort((a,b) => a.date.localeCompare(b.date));
+    const stTasks = Object.values(DB.tasks).filter(t => mtgs.map(m=>m.id).includes(t.meetingId) || t.storyId === st.id);
+    const stDone = stTasks.filter(t => t.status === 'done').length;
+    const pct = stTasks.length ? Math.round(stDone / stTasks.length * 100) : 0;
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+    const mtgRows = mtgs.map(m => {
+      const [y,mo,d] = m.date.split('-');
+      const isUpcoming = new Date(m.date) > new Date();
+      return `<div class="soc-mtg-row" onclick="event.stopPropagation();goMeeting('${m.id}')">
+        <div class="soc-mtg-date">${d}</div>
+        <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.title}</span>
+        <span style="font-size:10px;flex-shrink:0;color:${isUpcoming?'var(--accent)':'var(--fg-faint)'}">${months[parseInt(mo)-1]}${isUpcoming?' · upcoming':''}</span>
+      </div>`;
+    }).join('');
+
+    return `<div class="story-overview-card" onclick="goStory('${proj.id}','${st.id}')">
+      <div class="soc-head">
+        <div class="soc-icon">📋</div>
+        <div class="soc-info">
+          <div class="soc-name">${st.name}</div>
+          <div class="soc-meta">
+            <span>🗓 ${mtgs.length} meeting${mtgs.length!==1?'s':''}</span>
+            <span>✅ ${stTasks.length} tasks</span>
+            ${st.dueDate ? `<span>📅 ${st.dueDate}</span>` : ''}
+          </div>
+        </div>
+        <div class="soc-right">
+          <span class="status-pill" style="background:${st_status.bg};color:${st_status.color}">${st_status.label}</span>
+          <span style="font-size:12px;color:var(--fg-faint)">→</span>
+        </div>
+      </div>
+      ${stTasks.length ? `<div class="soc-body">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--fg-muted)">
+          <span>${stDone} of ${stTasks.length} tasks done</span>
+          <span style="font-weight:600;color:var(--accent)">${pct}%</span>
+        </div>
+        <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
+        ${mtgRows ? `<div class="soc-mtg-list">${mtgRows}</div>` : ''}
+      </div>` : (mtgRows ? `<div class="soc-body"><div class="soc-mtg-list">${mtgRows}</div></div>` : '')}
+    </div>`;
+  };
+
+  document.getElementById('main').innerHTML = `
+    <div class="story-wrap">
+      <div style="background:var(--bg-card);border-bottom:1px solid var(--border);padding:18px 22px;flex-shrink:0">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+          <div style="width:36px;height:36px;border-radius:9px;background:${proj.color};display:grid;place-items:center;color:white;font-size:16px;font-weight:800;flex-shrink:0">${proj.name[0]}</div>
+          <div style="flex:1">
+            <div style="font-size:19px;font-weight:700;letter-spacing:-.02em">${proj.name}</div>
+            <div style="font-size:11.5px;color:var(--fg-muted);margin-top:1px">${stories.length} stories · ${allMeetings.length} meetings · ${allTasks.length} tasks</div>
+          </div>
+          <button class="btn-primary" onclick="showNewStoryModal('${proj.id}')">＋ New Story</button>
+        </div>
+        <div class="proj-stat-grid">
+          <div class="proj-stat"><div class="proj-stat-val">${allTasks.length}</div><div class="proj-stat-lbl">Total tasks</div></div>
+          <div class="proj-stat"><div class="proj-stat-val" style="color:var(--success)">${doneTasks.length}</div><div class="proj-stat-lbl">Done</div></div>
+          <div class="proj-stat"><div class="proj-stat-val" style="color:var(--danger)">${overdueTasks.length}</div><div class="proj-stat-lbl">Overdue</div></div>
+          <div class="proj-stat"><div class="proj-stat-val">${allMeetings.length}</div><div class="proj-stat-lbl">Meetings</div></div>
+        </div>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:18px 22px 40px">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--fg-faint);margin-bottom:10px">Stories</div>
+        ${stories.length ? stories.map(storyCard).join('') : `<div style="padding:40px;text-align:center;color:var(--fg-muted);font-size:13px">No stories yet. <span style="color:var(--accent);cursor:pointer" onclick="showNewStoryModal('${proj.id}')">Create one →</span></div>`}
+      </div>
+    </div>`;
+}
+
+function showNewStoryModal(projectId) {
+  document.getElementById('modal').innerHTML = `
+    <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+      <div class="modal-box">
+        <div class="modal-title">New Story</div>
+        <div class="modal-sub">Add a story to organise meetings and tasks</div>
+        <div class="modal-field">
+          <div class="modal-label">Story Name</div>
+          <input class="modal-input" id="ns-name" placeholder="e.g. Vendor Negotiation" autofocus>
+        </div>
+        <div class="modal-field">
+          <div class="modal-label">Status</div>
+          <select class="modal-input" id="ns-status">
+            <option value="open">Open</option>
+            <option value="in_progress">In Progress</option>
+            <option value="done">Done</option>
+          </select>
+        </div>
+        <div class="modal-field">
+          <div class="modal-label">Due Date (optional)</div>
+          <input class="modal-input" type="date" id="ns-due">
+        </div>
+        <div class="modal-footer">
+          <button class="btn-ghost" onclick="closeModal()">Cancel</button>
+          <button class="btn-primary" onclick="createStory('${projectId}')">Create Story</button>
+        </div>
+      </div>
+    </div>`;
+  setTimeout(() => document.getElementById('ns-name').focus(), 50);
+}
+
+function createStory(projectId) {
+  const name   = document.getElementById('ns-name').value.trim() || 'Untitled Story';
+  const status = document.getElementById('ns-status').value;
+  const due    = document.getElementById('ns-due').value || '';
+  const id = uid('story');
+  DB.stories[id] = {id, projectId, name, status, dueDate: due, assignees:['Rey']};
+  closeModal();
+  toast(`Story "${name}" created`);
+  S.expandedProjects[projectId] = true;
+  renderSidebar();
+  if (S.view === 'project' && S.projectId === projectId) renderProject();
+}
+
+// ==================== MAIN RENDER ====================
+function render() {
+  renderSidebar();
+  if (S.view === 'story')        renderStory();
+  else if (S.view === 'meeting') renderMeeting();
+  else if (S.view === 'myboard') renderMyBoard();
+  else if (S.view === 'inbox')   renderMyBoard();
+  else if (S.view === 'project') renderProject();
+}
+
+// keyboard shortcuts
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+});
+
+render();
+</script>
+</body>
+</html>
