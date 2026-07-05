@@ -2727,17 +2727,31 @@ function renderSettings() {
         </div>
 
         <h3 style="font-size:13px;font-weight:700;margin-bottom:9px;padding-bottom:6px;border-bottom:1px solid var(--border)">🤖 AI Processing Mode</h3>
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:13px">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:9px">
           ${[
             {key:'paste', badge:'Free',        bc:'var(--success-soft)', fc:'var(--success)', title:'Prompt-paste', desc:'Copy prompt, paste JSON back.', sel:false},
-            {key:'byo',   badge:'Recommended', bc:'var(--accent-soft)', fc:'var(--accent)',   title:'BYO API Key',  desc:'Direct Anthropic API call.',  sel:true},
-            {key:'hosted',badge:'Unavailable', bc:'var(--bg)', fc:'var(--fg-muted)',           title:'Hosted LLM',   desc:'Included in paid plans.',     sel:false, off:true},
+            {key:'byo',   badge:'Recommended', bc:'var(--accent-soft)', fc:'var(--accent)',   title:'BYO Key',      desc:'Use your own LLM provider key.', sel:true},
+            {key:'hosted',badge:'Unavailable', bc:'var(--bg)', fc:'var(--fg-muted)',           title:'Hosted',       desc:'Included in paid plans.',     sel:false, off:true},
           ].map(m=>`
-            <div onclick="${m.off?'':`toast('✓ ${m.title} selected')`}" style="background:${m.sel?'var(--accent-soft)':'var(--bg-card)'};border:2px solid ${m.sel?'var(--accent)':'var(--border)'};border-radius:var(--radius);padding:11px;cursor:${m.off?'default':'pointer'};opacity:${m.off?.5:1}">
+            <div onclick="${m.off?'':m.sel?'':''}" style="background:${m.sel?'var(--accent-soft)':'var(--bg-card)'};border:2px solid ${m.sel?'var(--accent)':'var(--border)'};border-radius:var(--radius);padding:11px;cursor:${m.off?'default':'pointer'};opacity:${m.off?.5:1}">
               <span style="font-size:9.5px;font-weight:700;padding:2px 6px;border-radius:4px;margin-bottom:5px;display:inline-block;background:${m.bc};color:${m.fc}">${m.badge}</span>
               <h4 style="font-size:12.5px;font-weight:700;margin:0 0 2px">${m.title}</h4>
               <p style="font-size:11px;color:var(--fg-muted);margin:0">${m.desc}</p>
             </div>`).join('')}
+        </div>
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:13px 14px;margin-bottom:13px">
+          <div style="font-size:12px;font-weight:600;margin-bottom:8px;color:var(--fg-muted)">LLM Provider</div>
+          <div id="proto-providers" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+            ${['Claude','GPT-4','Gemini','Mistral'].map((p,i)=>`
+            <button onclick="(function(el,name){document.querySelectorAll('#proto-providers button').forEach(b=>{ b.style.background='var(--bg)';b.style.color='var(--fg-muted)';b.style.borderColor='var(--border)';b.style.fontWeight='400'; }); el.style.background='var(--accent)';el.style.color='white';el.style.borderColor='var(--accent)';el.style.fontWeight='600'; const hints={'Claude':'sk-ant-api03-…','GPT-4':'sk-…','Gemini':'AIza…','Mistral':'api-key…'}; document.getElementById('proto-key-input').placeholder=hints[name]||'api-key…'; })(this,'${p}')"
+              style="padding:4px 12px;font-size:12px;border-radius:5px;cursor:pointer;border:1px solid ${i===0?'var(--accent)':'var(--border)'};background:${i===0?'var(--accent)':'var(--bg)'};color:${i===0?'white':'var(--fg-muted)'};font-weight:${i===0?'600':'400'}">${p}</button>`).join('')}
+          </div>
+          <div style="display:flex;gap:6px">
+            <input id="proto-key-input" type="password" placeholder="sk-ant-api03-…"
+              style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 10px;font-size:12.5px;font-family:ui-monospace,monospace;color:var(--fg);outline:none">
+            <button onclick="toast('✓ Key saved to vault')" style="background:var(--accent);color:white;border:none;border-radius:var(--radius-sm);padding:6px 14px;font-size:12.5px;cursor:pointer">Save</button>
+          </div>
+          <p style="font-size:11px;color:var(--fg-muted);margin:7px 0 0">Your API key is encrypted and stored securely — only a secret ID is saved to your organization.</p>
         </div>
 
         <h3 style="font-size:13px;font-weight:700;margin-bottom:9px;padding-bottom:6px;border-bottom:1px solid var(--border)">🔔 Notifications</h3>
